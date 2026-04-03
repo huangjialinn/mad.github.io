@@ -65,7 +65,6 @@ async function init() {
   cacheDom();
   applyHeader();
   applyFeatureVisibility();
-  startIntroAnimation();
   initGithubConfig();
   populateMemberControls();
   bindEvents();
@@ -82,7 +81,6 @@ function cacheDom() {
   const ids = [
     "site-title",
     "site-tagline",
-    "intro-overlay",
     "admin-password",
     "admin-login-form",
     "github-panel",
@@ -135,36 +133,6 @@ function cacheDom() {
   ids.forEach((id) => {
     dom[id] = document.getElementById(id);
   });
-}
-
-function startIntroAnimation() {
-  const overlay = dom["intro-overlay"];
-  if (!overlay) {
-    return;
-  }
-
-  let ended = false;
-  const endIntro = () => {
-    if (ended) {
-      return;
-    }
-    ended = true;
-    overlay.classList.add("intro-leave");
-    document.body.classList.add("intro-done");
-    window.setTimeout(() => {
-      if (overlay.parentNode) {
-        overlay.parentNode.removeChild(overlay);
-      }
-    }, 900);
-  };
-
-  window.setTimeout(endIntro, 3200);
-  overlay.addEventListener("click", endIntro, { once: true });
-  window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      endIntro();
-    }
-  }, { once: true });
 }
 
 function applyHeader() {
