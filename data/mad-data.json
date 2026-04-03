@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "updatedAt": "2026-04-03T00:00:00.000Z",
+  "events": [],
+  "honors": [],
+  "pets": [],
+  "logs": [
+    {
+      "id": "log_bootstrap",
+      "text": "2026年4月3日，初始化 MAD 数据文件。",
+      "actorId": null,
+      "timestamp": "2026-04-03T00:00:00.000Z"
+    }
+  ]
+}

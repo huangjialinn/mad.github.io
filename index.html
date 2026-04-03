@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="bg-radial"></div>
+  <div class="bg-grid"></div>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <p class="kicker">MAD Club</p>
+        <h1 id="site-title">MAD</h1>
+        <p id="site-tagline">内部娱乐网站 · 记录你们的高光和糗事</p>
+      </div>
+      <p class="hero-tip">仅 8 位成员可新增/删除内容，访客为只读模式。</p>
+    </header>
+
+    <section class="card">
+      <h2>登录与权限</h2>
+      <div class="login-grid">
+        <form id="member-login-form" class="inline-form" data-edit-only="false">
+          <label>
+            成员
+            <select id="login-member" required></select>
+          </label>
+          <label>
+            密码
+            <input id="login-password" type="password" required placeholder="输入成员密码">
+          </label>
+          <button type="submit">成员登录</button>
+        </form>
+        <div class="actions">
+          <button id="guest-login-btn" type="button" class="ghost">访客只读</button>
+          <button id="logout-btn" type="button" class="ghost">退出登录</button>
+        </div>
+      </div>
+      <p id="login-status" class="status">当前状态：未登录（只读）</p>
+    </section>
+
+    <section class="card">
+      <h2>GitHub Pages 持久化</h2>
+      <p class="muted">
+        页面默认读取 <code>data/mad-data.json</code>。成员编辑后可点击“同步到 GitHub”提交 JSON 到仓库，下一次进入页面会自动读取最新数据。
+      </p>
+      <div class="github-grid">
+        <label>Owner <input id="gh-owner" type="text" placeholder="huangjialinn"></label>
+        <label>Repo <input id="gh-repo" type="text" placeholder="mad.github.io"></label>
+        <label>Branch <input id="gh-branch" type="text" value="main"></label>
+        <label>Data Path <input id="gh-path" type="text" value="data/mad-data.json"></label>
+        <label class="token-label">
+          Token
+          <input id="gh-token" type="password" placeholder="GitHub PAT（repo 权限）">
+        </label>
+      </div>
+      <div class="actions">
+        <button id="save-gh-config-btn" type="button" class="ghost">保存配置</button>
+        <button id="reload-data-btn" type="button" class="ghost">重新加载数据</button>
+        <button id="sync-github-btn" type="button" data-edit-only="true">同步到 GitHub</button>
+      </div>
+      <p id="sync-status" class="status">同步状态：未操作</p>
+    </section>
+
+    <section class="layout">
+      <article class="card span-2">
+        <h2>事件记录日历</h2>
+        <div class="calendar-head">
+          <button id="prev-month-btn" type="button" class="ghost">上个月</button>
+          <strong id="calendar-title"></strong>
+          <button id="next-month-btn" type="button" class="ghost">下个月</button>
+        </div>
+        <div id="calendar-grid" class="calendar-grid"></div>
+        <div class="selected-events">
+          <h3 id="selected-date-title"></h3>
+          <div id="selected-date-events"></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>新增事件</h2>
+        <form id="event-form" data-edit-only="true">
+          <label>
+            日期
+            <input id="event-date" type="date" required>
+          </label>
+          <label>
+            类型
+            <select id="event-type" required>
+              <option value="drink">喝酒记录</option>
+              <option value="meal">吃饭记录</option>
+              <option value="sport">群体运动记录</option>
+            </select>
+          </label>
+          <label id="event-location-wrap">
+            地点
+            <input id="event-location" type="text" placeholder="如：小酒馆、火锅店、体育馆">
+          </label>
+          <label id="event-activity-wrap" class="hidden">
+            运动项目
+            <input id="event-activity" type="text" placeholder="如：羽毛球、篮球">
+          </label>
+          <label id="event-time-wrap" class="hidden">
+            运动时间
+            <input id="event-sport-time" type="datetime-local">
+          </label>
+          <label id="event-score-wrap" class="hidden">
+            Y其林评分（-3 到 3）
+            <input id="event-score" type="number" min="-3" max="3" step="1" value="0">
+          </label>
+          <div>
+            <p class="label-like">参与成员</p>
+            <div id="event-member-checkboxes" class="chips"></div>
+          </div>
+          <label id="event-images-wrap">
+            图片
+            <input id="event-images" type="file" accept="image/*" multiple>
+            <small id="event-image-hint" class="muted">喝酒最多 1 张；吃饭最多 9 张；运动不需要图片。</small>
+          </label>
+          <button type="submit">新增事件</button>
+        </form>
+      </article>
+
+      <article class="card">
+        <h2>成员光荣榜（糗事）</h2>
+        <form id="honor-form" data-edit-only="true">
+          <label>
+            日期
+            <input id="honor-date" type="date" required>
+          </label>
+          <label>
+            成员
+            <select id="honor-member" required></select>
+          </label>
+          <label>
+            糗事内容
+            <textarea id="honor-story" rows="3" required placeholder="写点群友名场面"></textarea>
+          </label>
+          <label>
+            图片（最多 9 张）
+            <input id="honor-images" type="file" accept="image/*" multiple>
+          </label>
+          <button type="submit">新增糗事</button>
+        </form>
+        <div id="honor-list" class="stack"></div>
+      </article>
+
+      <article class="card">
+        <h2>成员宠物展示</h2>
+        <form id="pet-form" data-edit-only="true">
+          <label>
+            成员
+            <select id="pet-member" required></select>
+          </label>
+          <label>
+            宠物名
+            <input id="pet-name" type="text" required>
+          </label>
+          <label>
+            年龄（岁）
+            <input id="pet-age" type="number" min="0" max="40" required>
+          </label>
+          <label>
+            图片（最多 9 张）
+            <input id="pet-images" type="file" accept="image/*" multiple>
+          </label>
+          <button type="submit">新增宠物</button>
+        </form>
+        <div id="pet-list" class="stack"></div>
+      </article>
+
+      <article class="card">
+        <h2>更新日志</h2>
+        <div id="log-list" class="stack"></div>
+      </article>
+    </section>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
