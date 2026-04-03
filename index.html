@@ -48,25 +48,21 @@
       <p id="login-status" class="status">当前状态：未登录管理权限（只读）</p>
     </section>
 
-    <section class="card" id="github-panel">
-      <h2>GitHub Pages 持久化</h2>
+    <section class="card" id="cloud-panel">
+      <h2>云端持久化</h2>
       <p class="muted">
-        页面默认读取 <code>data/mad-data.json</code>。进入管理模式后，新增或删除会自动同步到 GitHub；“同步到 GitHub”按钮可作为手动重试。
+        配置 Cloudflare Worker 接口后，进入管理模式的新增/删除会自动同步到云端；其他设备刷新后即可看到最新内容。
       </p>
       <div class="github-grid">
-        <label>Owner <input id="gh-owner" type="text" placeholder="huangjialinn"></label>
-        <label>Repo <input id="gh-repo" type="text" placeholder="mad.github.io"></label>
-        <label>Branch <input id="gh-branch" type="text" value="main"></label>
-        <label>Data Path <input id="gh-path" type="text" value="data/mad-data.json"></label>
         <label class="token-label">
-          Token
-          <input id="gh-token" type="password" placeholder="GitHub PAT（repo 权限）">
+          API Endpoint
+          <input id="api-endpoint" type="text" placeholder="https://your-worker.your-subdomain.workers.dev">
         </label>
       </div>
       <div class="actions">
-        <button id="save-gh-config-btn" type="button" class="ghost">保存配置</button>
+        <button id="save-api-config-btn" type="button" class="ghost">保存配置</button>
         <button id="reload-data-btn" type="button" class="ghost">重新加载数据</button>
-        <button id="sync-github-btn" type="button" data-edit-only="true">同步到 GitHub</button>
+        <button id="sync-cloud-btn" type="button" data-edit-only="true">同步到云端</button>
       </div>
       <p id="sync-status" class="status">同步状态：未操作</p>
     </section>
@@ -96,18 +92,18 @@
           <label>
             类型
             <select id="event-type" required>
-              <option value="drink">喝酒搞事</option>
-              <option value="meal">吃饭搞事</option>
-              <option value="sport">群体运动搞事</option>
+              <option value="drink">DRINK</option>
+              <option value="meal">HUNT</option>
+              <option value="sport">SPORT</option>
             </select>
           </label>
           <label id="event-location-wrap">
             地点
-            <input id="event-location" type="text" placeholder="如：小酒馆、火锅店、体育馆">
+            <input id="event-location" type="text" placeholder="">
           </label>
           <label id="event-activity-wrap" class="hidden">
             运动项目
-            <input id="event-activity" type="text" placeholder="如：羽毛球、篮球">
+            <input id="event-activity" type="text" placeholder="">
           </label>
           <label id="event-time-wrap" class="hidden">
             运动时间

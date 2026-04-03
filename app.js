@@ -1,16 +1,17 @@
-/* 可修改接口：站点名称、标语、8 位成员资料、GitHub 默认仓库配置 */
+/* 可修改配置：站点名称、标语、成员资料、云端持久化接口 */
 const APP_CONFIG = {
   siteTitle: "一车面包人",
   siteTagline: "内部娱乐网站 · 记录你们的高光和糗事",
   tickerText: "TEST",
   adminPassword: "2026",
   ui: {
-    showGithubPanel: true
+    showCloudPanel: true
   },
   persistence: {
     autoSyncOnChange: true,
     saveDebounceMs: 0,
-    githubToken: "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"
+    cloudApiBase: "",
+    localDataPath: "data/mad-data.json"
   },
   upload: {
     maxSingleImageMB: 12,
@@ -28,18 +29,14 @@ const APP_CONFIG = {
     { id: "m7", name: "姜行", avatar: "./png/p7.png" },
     { id: "m8", name: "二", avatar: "./png/p8.png" }
   ],
-  githubDefaults: {
-    owner: "huangjialinn",
-    repo: "mad.github.io",
-    branch: "main",
-    dataPath: "data/mad-data.json"
+  cloudDefaults: {
+    endpoint: ""
   }
 };
 
 const STORAGE_KEYS = {
   draft: "mad_local_draft_v1",
-  githubConfig: "mad_github_config_v1",
-  githubToken: "mad_github_token_v1"
+  cloudConfig: "mad_cloud_config_v1"
 };
 
 const EVENT_TYPE_META = {
@@ -58,7 +55,8 @@ const state = {
   currentUser: { role: "guest", memberId: null, name: "访客" },
   selectedDate: toISODate(new Date()),
   calendarMonth: startOfMonth(new Date()),
-  githubConfig: { ...APP_CONFIG.githubDefaults }
+  cloudConfig: { ...APP_CONFIG.cloudDefaults },
+  adminSessionPassword: ""
 };
 
 const dom = {};
@@ -74,7 +72,7 @@ async function init() {
   cacheDom();
   applyHeader();
   applyFeatureVisibility();
-  initGithubConfig();
+  initCloudConfig();
   populateMemberControls();
   bindEvents();
   setupDefaultDates();
@@ -82,7 +80,7 @@ async function init() {
   refreshPermissionUI();
   window.addEventListener("beforeunload", flushPendingDraftSync);
 
-  await loadDataFromPages();
+  await loadDataFromCloud();
   renderAll();
 }
 
@@ -95,16 +93,12 @@ function cacheDom() {
     "login-panel",
     "admin-password",
     "admin-login-form",
-    "github-panel",
+    "cloud-panel",
     "login-status",
-    "gh-owner",
-    "gh-repo",
-    "gh-branch",
-    "gh-path",
-    "gh-token",
-    "save-gh-config-btn",
+    "api-endpoint",
+    "save-api-config-btn",
     "reload-data-btn",
-    "sync-github-btn",
+    "sync-cloud-btn",
     "sync-status",
     "prev-month-btn",
     "next-month-btn",
@@ -187,54 +181,38 @@ function renderTicker() {
 }
 
 function applyFeatureVisibility() {
-  if (!APP_CONFIG.ui.showGithubPanel && dom["github-panel"]) {
-    dom["github-panel"].classList.add("hidden");
+  if (!APP_CONFIG.ui.showCloudPanel && dom["cloud-panel"]) {
+    dom["cloud-panel"].classList.add("hidden");
   }
 }
 
-function initGithubConfig() {
-  const stored = localStorage.getItem(STORAGE_KEYS.githubConfig);
+function initCloudConfig() {
+  const stored = localStorage.getItem(STORAGE_KEYS.cloudConfig);
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
-      state.githubConfig = { ...state.githubConfig, ...parsed };
+      state.cloudConfig = { ...state.cloudConfig, ...parsed };
     } catch (error) {
-      console.warn("GitHub 配置读取失败，将使用默认配置", error);
+      console.warn("云端配置读取失败，将使用默认配置", error);
     }
   }
-  fillGithubInputs();
-  const token = localStorage.getItem(STORAGE_KEYS.githubToken) || "";
-  if (dom["gh-token"]) {
-    dom["gh-token"].value = token;
-  }
+  fillCloudInputs();
 }
 
-function fillGithubInputs() {
-  dom["gh-owner"].value = state.githubConfig.owner || "";
-  dom["gh-repo"].value = state.githubConfig.repo || "";
-  dom["gh-branch"].value = state.githubConfig.branch || "main";
-  dom["gh-path"].value = state.githubConfig.dataPath || "data/mad-data.json";
+function fillCloudInputs() {
+  dom["api-endpoint"].value = state.cloudConfig.endpoint || APP_CONFIG.persistence.cloudApiBase || "";
 }
 
-function readGithubConfigInputs() {
+function readCloudConfigInputs() {
   return {
-    owner: dom["gh-owner"].value.trim(),
-    repo: dom["gh-repo"].value.trim(),
-    branch: dom["gh-branch"].value.trim() || "main",
-    dataPath: dom["gh-path"].value.trim() || "data/mad-data.json"
+    endpoint: dom["api-endpoint"].value.trim()
   };
 }
 
-function saveGithubConfig() {
-  state.githubConfig = readGithubConfigInputs();
-  localStorage.setItem(STORAGE_KEYS.githubConfig, JSON.stringify(state.githubConfig));
-  const token = dom["gh-token"] ? dom["gh-token"].value.trim() : "";
-  if (token) {
-    localStorage.setItem(STORAGE_KEYS.githubToken, token);
-  } else {
-    localStorage.removeItem(STORAGE_KEYS.githubToken);
-  }
-  setSyncStatus("已保存 GitHub 配置。", false);
+function saveCloudConfig() {
+  state.cloudConfig = readCloudConfigInputs();
+  localStorage.setItem(STORAGE_KEYS.cloudConfig, JSON.stringify(state.cloudConfig));
+  setSyncStatus("已保存云端配置。", false);
 }
 
 function populateMemberControls() {
@@ -303,17 +281,18 @@ function bindEvents() {
     renderCalendar();
   });
 
-  dom["save-gh-config-btn"].addEventListener("click", saveGithubConfig);
+  dom["save-api-config-btn"].addEventListener("click", saveCloudConfig);
   dom["reload-data-btn"].addEventListener("click", async () => {
-    await loadDataFromPages();
+    await loadDataFromCloud();
     renderAll();
   });
-  dom["sync-github-btn"].addEventListener("click", handleSyncToGithub);
+  dom["sync-cloud-btn"].addEventListener("click", handleSyncToCloud);
 }
 
 function handleManageToggle() {
   if (canEdit()) {
     state.currentUser = { role: "guest", memberId: null, name: "访客" };
+    state.adminSessionPassword = "";
     dom["admin-password"].value = "";
     toggleLoginPanel(false);
     refreshPermissionUI();
@@ -360,11 +339,27 @@ function applyEventTypeRules() {
   dom["event-image-hint"].textContent = hint;
 }
 
-function handleAdminLogin(event) {
+async function handleAdminLogin(event) {
   event.preventDefault();
   const password = dom["admin-password"].value.trim();
+  const cloudConfig = readCloudConfigInputs();
+  state.cloudConfig = cloudConfig;
 
-  if (!password || password !== APP_CONFIG.adminPassword) {
+  if (!password) {
+    alert("请输入管理密码。");
+    return;
+  }
+
+  if (cloudConfig.endpoint) {
+    const verified = await verifyAdminPassword(cloudConfig, password);
+    if (!verified) {
+      if (password !== APP_CONFIG.adminPassword) {
+        alert("管理密码错误或云端认证失败。");
+        return;
+      }
+      setSyncStatus("云端认证失败，已进入本地管理模式。", true);
+    }
+  } else if (password !== APP_CONFIG.adminPassword) {
     alert("管理密码错误。");
     return;
   }
@@ -374,22 +369,25 @@ function handleAdminLogin(event) {
     memberId: ADMIN_ACTOR_ID,
     name: "管理员"
   };
+  state.adminSessionPassword = password;
   dom["admin-password"].value = "";
-  applyBuiltinGithubTokenForAdmin();
   toggleLoginPanel(false);
   refreshPermissionUI();
   setLoginStatus();
 }
 
-function applyBuiltinGithubTokenForAdmin() {
-  const token = (APP_CONFIG.persistence.githubToken || "").trim();
-  if (!token || !canEdit()) {
-    return;
+async function verifyAdminPassword(config, password) {
+  const endpoint = buildCloudApiUrl(config.endpoint, "/auth");
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "X-Admin-Password": password }
+    });
+    return response.ok;
+  } catch (error) {
+    setSyncStatus(`云端认证失败：${error.message}`, true);
+    return false;
   }
-  if (dom["gh-token"]) {
-    dom["gh-token"].value = token;
-  }
-  localStorage.setItem(STORAGE_KEYS.githubToken, token);
 }
 
 function setLoginStatus() {
@@ -432,10 +430,14 @@ function canEdit() {
   return state.currentUser.role === "admin";
 }
 
-async function loadDataFromPages() {
-  const config = readGithubConfigInputs();
-  state.githubConfig = config;
-  const path = config.dataPath || "data/mad-data.json";
+async function loadDataFromCloud() {
+  const config = readCloudConfigInputs();
+  state.cloudConfig = config;
+  const hasCloudEndpoint = Boolean(config.endpoint);
+  const sourceLabel = hasCloudEndpoint ? "云端" : "本地数据文件";
+  const path = hasCloudEndpoint
+    ? buildCloudApiUrl(config.endpoint, "/mad-data")
+    : APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
   const localDraft = loadLocalDraft();
 
   try {
@@ -449,24 +451,24 @@ async function loadDataFromPages() {
       const remoteTs = getDataTimestamp(remoteData);
       if (localTs >= remoteTs) {
         state.data = localDraft;
-        setSyncStatus(`已读取本地最新草稿（本地时间戳更新）：${path}`, false);
+        setSyncStatus(`已读取本地最新草稿（覆盖${sourceLabel}旧数据）`, false);
       } else {
         state.data = remoteData;
-        setSyncStatus(`读取成功：${path}`, false);
+        setSyncStatus(`已读取${sourceLabel}数据`, false);
       }
     } else {
       state.data = remoteData;
-      setSyncStatus(`读取成功：${path}`, false);
+      setSyncStatus(`已读取${sourceLabel}数据`, false);
     }
     persistLocalDraft(true);
   } catch (error) {
     if (localDraft) {
       state.data = localDraft;
-      setSyncStatus(`读取远程失败，已使用本地草稿：${error.message}`, true);
+      setSyncStatus(`读取${sourceLabel}失败，已使用本地草稿：${error.message}`, true);
       return;
     }
     state.data = createEmptyData();
-    setSyncStatus(`读取失败，已初始化空数据：${error.message}`, true);
+    setSyncStatus(`读取${sourceLabel}失败，已初始化空数据：${error.message}`, true);
   }
 }
 
@@ -1144,26 +1146,18 @@ function removeById(collectionName, id, logText) {
   renderLogList();
 }
 
-function getGithubToken() {
-  const inputToken = dom["gh-token"] ? dom["gh-token"].value.trim() : "";
-  if (inputToken) {
-    return inputToken;
-  }
-  const storedToken = localStorage.getItem(STORAGE_KEYS.githubToken) || "";
-  if (storedToken) {
-    return storedToken;
-  }
-  return (APP_CONFIG.persistence.githubToken || "").trim();
-}
-
 function queueAutoSync() {
   if (!canEdit() || !APP_CONFIG.persistence.autoSyncOnChange) {
     return;
   }
 
-  const token = getGithubToken();
-  if (!token) {
-    setSyncStatus("未配置 GitHub Token，当前仅本地保存，跨端不可见。", true);
+  const endpoint = getCloudEndpoint();
+  if (!endpoint) {
+    setSyncStatus("未配置云端接口地址，当前仅本地保存，跨端不可见。", true);
+    return;
+  }
+  if (!state.adminSessionPassword) {
+    setSyncStatus("管理会话已失效，请重新进入管理模式。", true);
     return;
   }
 
@@ -1171,19 +1165,19 @@ function queueAutoSync() {
     autoSyncDirty = true;
     return;
   }
-  void runAutoSync(token);
+  void runAutoSync();
 }
 
-async function runAutoSync(token) {
+async function runAutoSync() {
   if (autoSyncInFlight) {
     autoSyncDirty = true;
     return;
   }
   autoSyncInFlight = true;
-  state.githubConfig = readGithubConfigInputs();
+  state.cloudConfig = readCloudConfigInputs();
   try {
-    await syncDataFileToGithub(state.githubConfig, token, state.data);
-    setSyncStatus("自动同步成功：已保存到 GitHub。", false);
+    await syncDataToCloud(state.cloudConfig, state.adminSessionPassword, state.data);
+    setSyncStatus("自动同步成功：已保存到云端。", false);
   } catch (error) {
     setSyncStatus(`自动同步失败：${error.message}`, true);
   } finally {
@@ -1206,101 +1200,74 @@ function addLog(text) {
   state.data.updatedAt = new Date().toISOString();
 }
 
-async function handleSyncToGithub() {
+async function handleSyncToCloud() {
   if (!canEdit()) {
     return;
   }
-  const config = readGithubConfigInputs();
-  const token = getGithubToken();
-  if (!config.owner || !config.repo || !config.branch || !config.dataPath) {
-    alert("请完整填写 GitHub Owner/Repo/Branch/Data Path。");
+  const config = readCloudConfigInputs();
+  if (!config.endpoint) {
+    alert("请先填写云端接口地址。");
     return;
   }
-  if (!token) {
-    alert("请填写 GitHub PAT。");
+  if (!state.adminSessionPassword) {
+    alert("管理会话已失效，请重新登录管理模式。");
     return;
   }
 
-  state.githubConfig = config;
-  localStorage.setItem(STORAGE_KEYS.githubConfig, JSON.stringify(config));
-  if (token) {
-    localStorage.setItem(STORAGE_KEYS.githubToken, token);
-  }
+  state.cloudConfig = config;
+  localStorage.setItem(STORAGE_KEYS.cloudConfig, JSON.stringify(config));
 
   try {
-    setSyncStatus("正在提交到 GitHub...", false);
-    await syncDataFileToGithub(config, token, state.data);
-    setSyncStatus("同步成功：数据已提交到 GitHub。", false);
+    setSyncStatus("正在提交到云端...", false);
+    await syncDataToCloud(config, state.adminSessionPassword, state.data);
+    setSyncStatus("同步成功：数据已提交到云端。", false);
   } catch (error) {
     setSyncStatus(`同步失败：${error.message}`, true);
   }
 }
 
-async function syncDataFileToGithub(config, token, data) {
-  const endpoint = buildContentsApiUrl(config);
-  const headers = {
-    Accept: "application/vnd.github+json",
-    Authorization: `Bearer ${token}`,
-    "X-GitHub-Api-Version": "2022-11-28"
-  };
-
-  let sha;
-  const checkResponse = await fetch(`${endpoint}?ref=${encodeURIComponent(config.branch)}`, {
-    method: "GET",
-    headers
+async function syncDataToCloud(config, adminPassword, data) {
+  const endpoint = buildCloudApiUrl(config.endpoint, "/mad-data");
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Admin-Password": adminPassword
+    },
+    body: JSON.stringify(data)
   });
-  if (checkResponse.ok) {
-    const info = await checkResponse.json();
-    sha = info.sha;
-  } else if (checkResponse.status !== 404) {
-    throw new Error(await extractGithubError(checkResponse));
-  }
-
-  const content = utf8ToBase64(JSON.stringify(data, null, 2));
-  const payload = {
-    message: `chore: update MAD data ${new Date().toISOString()}`,
-    content,
-    branch: config.branch
-  };
-  if (sha) {
-    payload.sha = sha;
-  }
-
-  const putResponse = await fetch(endpoint, {
-    method: "PUT",
-    headers: { ...headers, "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  if (!putResponse.ok) {
-    throw new Error(await extractGithubError(putResponse));
+  if (!response.ok) {
+    throw new Error(await extractApiError(response));
   }
 }
 
-function buildContentsApiUrl(config) {
-  const encodedPath = config.dataPath
-    .split("/")
-    .map((part) => encodeURIComponent(part))
-    .join("/");
-  return `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${encodedPath}`;
+function getCloudEndpoint() {
+  const inputValue = dom["api-endpoint"] ? dom["api-endpoint"].value.trim() : "";
+  if (inputValue) {
+    return inputValue;
+  }
+  if (state.cloudConfig.endpoint) {
+    return state.cloudConfig.endpoint;
+  }
+  return (APP_CONFIG.persistence.cloudApiBase || "").trim();
 }
 
-async function extractGithubError(response) {
+function buildCloudApiUrl(baseUrl, pathname) {
+  const base = String(baseUrl || "").trim();
+  if (!base) {
+    return "";
+  }
+  const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
+  return `${normalizedBase}${pathname}`;
+}
+
+async function extractApiError(response) {
   try {
     const json = await response.json();
     return json.message || `${response.status} ${response.statusText}`;
   } catch (error) {
     return `${response.status} ${response.statusText}`;
   }
-}
-
-function utf8ToBase64(text) {
-  const bytes = new TextEncoder().encode(text);
-  const chunkSize = 0x8000;
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
 }
 
 function normalizeData(raw) {
