@@ -10,7 +10,7 @@ const APP_CONFIG = {
   persistence: {
     autoSyncOnChange: true,
     saveDebounceMs: 0,
-    githubToken: "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"
+    githubToken: "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"
   },
   upload: {
     maxSingleImageMB: 12,
