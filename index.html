@@ -17,18 +17,13 @@
   <div class="bg-grid"></div>
   <div class="page">
     <div class="top-ticker" aria-label="滚动公告">
-      <div class="top-ticker-track">
-        <span class="top-ticker-item" id="top-ticker-text">test test test</span>
-        <span class="top-ticker-item">test test test</span>
-        <span class="top-ticker-item">test test test</span>
-        <span class="top-ticker-item">test test test</span>
-      </div>
+      <div id="top-ticker-track" class="top-ticker-track"></div>
     </div>
 
     <header class="hero">
       <div>
         <p class="kicker">MAD Club</p>
-        <h1 id="site-title">MAD</h1>
+        <h1 id="site-title">一车面包人</h1>
         <p id="site-tagline">内部娱乐网站 · 记录你们的高光和糗事</p>
       </div>
       <p class="hero-tip">未登录时仅可浏览。输入管理密码后可新增与删除内容。</p>
@@ -76,7 +71,7 @@
 
     <section class="layout">
       <article class="card span-2">
-        <h2>事件记录日历</h2>
+        <h2>搞事日历</h2>
         <div class="calendar-head">
           <button id="prev-month-btn" type="button" class="ghost">上个月</button>
           <strong id="calendar-title"></strong>
@@ -90,7 +85,7 @@
       </article>
 
       <article class="card hidden" data-admin-only="true">
-        <h2>新增事件</h2>
+        <h2>新增搞事</h2>
         <form id="event-form" data-edit-only="true">
           <label>
             日期
@@ -99,9 +94,9 @@
           <label>
             类型
             <select id="event-type" required>
-              <option value="drink">喝酒记录</option>
-              <option value="meal">吃饭记录</option>
-              <option value="sport">群体运动记录</option>
+              <option value="drink">喝酒搞事</option>
+              <option value="meal">吃饭搞事</option>
+              <option value="sport">群体运动搞事</option>
             </select>
           </label>
           <label id="event-location-wrap">
@@ -127,19 +122,19 @@
           <label id="event-images-wrap">
             图片
             <input id="event-images" type="file" accept="image/*" multiple>
-            <small id="event-image-hint" class="muted">喝酒最多 1 张；吃饭最多 9 张；运动不需要图片。手机建议单张 8MB 以内。</small>
+            <small id="event-image-hint" class="muted">喝酒搞事最多 1 张；吃饭搞事最多 9 张；运动搞事不需要图片。手机建议单张 8MB 以内。</small>
           </label>
-          <button type="submit">新增事件</button>
+          <button type="submit">新增搞事</button>
         </form>
       </article>
 
       <article class="card">
-        <h2>成员光荣榜（糗事）</h2>
+        <h2>全场最佳</h2>
         <div id="honor-list" class="stack"></div>
       </article>
 
       <article class="card hidden" data-admin-only="true">
-        <h2>新增糗事</h2>
+        <h2>新增全场最佳</h2>
         <form id="honor-form" data-edit-only="true">
           <label>
             日期
@@ -150,31 +145,31 @@
             <select id="honor-member" required></select>
           </label>
           <label>
-            糗事内容
+            最佳内容
             <textarea id="honor-story" rows="3" required placeholder="写点群友名场面"></textarea>
           </label>
           <label>
             图片（最多 9 张）
             <input id="honor-images" type="file" accept="image/*" multiple>
           </label>
-          <button type="submit">新增糗事</button>
+          <button type="submit">新增全场最佳</button>
         </form>
       </article>
 
       <article class="card">
-        <h2>成员宠物展示</h2>
+        <h2>灵宠</h2>
         <div id="pet-list" class="stack"></div>
       </article>
 
       <article class="card hidden" data-admin-only="true">
-        <h2>新增宠物</h2>
+        <h2>新增灵宠</h2>
         <form id="pet-form" data-edit-only="true">
           <label>
             成员
             <select id="pet-member" required></select>
           </label>
           <label>
-            宠物名
+            灵宠名
             <input id="pet-name" type="text" required>
           </label>
           <label>
@@ -185,7 +180,7 @@
             图片（最多 9 张）
             <input id="pet-images" type="file" accept="image/*" multiple>
           </label>
-          <button type="submit">新增宠物</button>
+          <button type="submit">新增灵宠</button>
         </form>
       </article>
 

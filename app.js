@@ -1,10 +1,16 @@
 /* 可修改接口：站点名称、标语、8 位成员资料、GitHub 默认仓库配置 */
 const APP_CONFIG = {
-  siteTitle: "MAD",
+  siteTitle: "一车面包人",
   siteTagline: "内部娱乐网站 · 记录你们的高光和糗事",
+  tickerText: "TEST",
   adminPassword: "2026",
   ui: {
     showGithubPanel: false
+  },
+  persistence: {
+    autoSyncOnChange: true,
+    saveDebounceMs: 1200,
+    githubToken: ""
   },
   upload: {
     maxSingleImageMB: 12,
@@ -32,13 +38,14 @@ const APP_CONFIG = {
 
 const STORAGE_KEYS = {
   draft: "mad_local_draft_v1",
-  githubConfig: "mad_github_config_v1"
+  githubConfig: "mad_github_config_v1",
+  githubToken: "mad_github_token_v1"
 };
 
 const EVENT_TYPE_META = {
-  drink: { label: "喝酒记录", maxImages: 1 },
-  meal: { label: "吃饭记录", maxImages: 9 },
-  sport: { label: "群体运动记录", maxImages: 0 }
+  drink: { label: "喝酒搞事", maxImages: 1 },
+  meal: { label: "吃饭搞事", maxImages: 9 },
+  sport: { label: "群体运动搞事", maxImages: 0 }
 };
 
 const MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
@@ -58,6 +65,9 @@ const dom = {};
 let draftPersistHandle = null;
 let draftPersistMode = null;
 let pendingDraftText = "";
+let autoSyncTimer = null;
+let autoSyncInFlight = false;
+let autoSyncDirty = false;
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -81,6 +91,7 @@ function cacheDom() {
   const ids = [
     "site-title",
     "site-tagline",
+    "top-ticker-track",
     "admin-password",
     "admin-login-form",
     "github-panel",
@@ -139,6 +150,24 @@ function applyHeader() {
   document.title = APP_CONFIG.siteTitle;
   dom["site-title"].textContent = APP_CONFIG.siteTitle;
   dom["site-tagline"].textContent = APP_CONFIG.siteTagline;
+  renderTicker();
+}
+
+function renderTicker() {
+  const track = dom["top-ticker-track"];
+  if (!track) {
+    return;
+  }
+  const text = (APP_CONFIG.tickerText || "TEST").trim() || "TEST";
+  const fragment = document.createDocumentFragment();
+  for (let i = 0; i < 6; i += 1) {
+    const span = document.createElement("span");
+    span.className = "top-ticker-item";
+    span.textContent = text;
+    fragment.appendChild(span);
+  }
+  track.innerHTML = "";
+  track.appendChild(fragment);
 }
 
 function applyFeatureVisibility() {
@@ -158,6 +187,10 @@ function initGithubConfig() {
     }
   }
   fillGithubInputs();
+  const token = localStorage.getItem(STORAGE_KEYS.githubToken) || APP_CONFIG.persistence.githubToken || "";
+  if (dom["gh-token"]) {
+    dom["gh-token"].value = token;
+  }
 }
 
 function fillGithubInputs() {
@@ -179,6 +212,10 @@ function readGithubConfigInputs() {
 function saveGithubConfig() {
   state.githubConfig = readGithubConfigInputs();
   localStorage.setItem(STORAGE_KEYS.githubConfig, JSON.stringify(state.githubConfig));
+  const token = dom["gh-token"] ? dom["gh-token"].value.trim() : "";
+  if (token) {
+    localStorage.setItem(STORAGE_KEYS.githubToken, token);
+  }
   setSyncStatus("已保存 GitHub 配置。", false);
 }
 
@@ -279,10 +316,10 @@ function applyEventTypeRules() {
   dom["event-images-wrap"].classList.toggle("hidden", !showImages);
 
   const hint = type === "drink"
-    ? "喝酒记录最多 1 张图片。"
+    ? "喝酒搞事最多 1 张图片。"
     : type === "meal"
-      ? "吃饭记录最多 9 张图片。"
-      : "运动记录不需要图片。";
+      ? "吃饭搞事最多 9 张图片。"
+      : "运动搞事不需要图片。";
   dom["event-image-hint"].textContent = hint;
 }
 
@@ -454,7 +491,7 @@ async function handleEventSubmit(event) {
   const memberIds = getCheckedMemberIds();
 
   if (!date) {
-    alert("请填写事件日期。");
+    alert("请填写搞事日期。");
     return;
   }
   if (!memberIds.length) {
@@ -506,6 +543,7 @@ async function handleEventSubmit(event) {
   state.data.events.push(item);
   addLog(`${formatCNDate(date)}，新增一次${EVENT_TYPE_META[type].label}。`);
   persistLocalDraft();
+  queueAutoSync();
   renderCalendar();
   renderSelectedDateEvents();
   renderLogList();
@@ -524,7 +562,7 @@ async function handleHonorSubmit(event) {
   const memberId = dom["honor-member"].value;
   const story = dom["honor-story"].value.trim();
   if (!date || !memberId || !story) {
-    alert("请完整填写糗事信息。");
+    alert("请完整填写全场最佳信息。");
     return;
   }
 
@@ -545,8 +583,9 @@ async function handleHonorSubmit(event) {
     createdAt: new Date().toISOString(),
     createdBy: state.currentUser.memberId
   });
-  addLog(`${formatCNDate(date)}，新增一条成员糗事。`);
+  addLog(`${formatCNDate(date)}，新增一条全场最佳。`);
   persistLocalDraft();
+  queueAutoSync();
   renderHonorList();
   renderLogList();
   dom["honor-form"].reset();
@@ -563,7 +602,7 @@ async function handlePetSubmit(event) {
   const name = dom["pet-name"].value.trim();
   const age = Number(dom["pet-age"].value);
   if (!memberId || !name || Number.isNaN(age)) {
-    alert("请完整填写宠物信息。");
+    alert("请完整填写灵宠信息。");
     return;
   }
 
@@ -584,8 +623,9 @@ async function handlePetSubmit(event) {
     createdAt: new Date().toISOString(),
     createdBy: state.currentUser.memberId
   });
-  addLog(`${formatCNDate(new Date())}，新增一条宠物记录。`);
+  addLog(`${formatCNDate(new Date())}，新增一条灵宠记录。`);
   persistLocalDraft();
+  queueAutoSync();
   renderPetList();
   renderLogList();
   dom["pet-form"].reset();
@@ -810,7 +850,7 @@ function buildEventCountersByDate(events = []) {
 
 function renderSelectedDateEvents() {
   const date = state.selectedDate;
-  dom["selected-date-title"].textContent = `${formatCNDate(date)} 事件`;
+  dom["selected-date-title"].textContent = `${formatCNDate(date)} 搞事`;
   dom["selected-date-events"].innerHTML = "";
   const fragment = document.createDocumentFragment();
 
@@ -821,7 +861,7 @@ function renderSelectedDateEvents() {
   if (!list.length) {
     const empty = document.createElement("p");
     empty.className = "muted";
-    empty.textContent = "当天暂无事件。";
+    empty.textContent = "当天暂无搞事。";
     fragment.appendChild(empty);
     dom["selected-date-events"].appendChild(fragment);
     return;
@@ -862,7 +902,7 @@ function renderHonorList() {
   if (!list.length) {
     const empty = document.createElement("p");
     empty.className = "muted";
-    empty.textContent = "暂无糗事记录。";
+    empty.textContent = "暂无全场最佳记录。";
     fragment.appendChild(empty);
     dom["honor-list"].appendChild(fragment);
     return;
@@ -872,8 +912,8 @@ function renderHonorList() {
     const card = document.createElement("div");
     card.className = "entry";
     const member = getMember(item.memberId);
-    card.appendChild(makeEntryHead(`${member.name} 的糗事`, item.date, () => {
-      removeById("honors", item.id, `${formatCNDate(item.date)}，删除一条成员糗事。`);
+    card.appendChild(makeEntryHead(`${member.name} 的全场最佳`, item.date, () => {
+      removeById("honors", item.id, `${formatCNDate(item.date)}，删除一条全场最佳。`);
     }, member));
     card.appendChild(makeParagraph(item.story));
     const images = makeImages(item.images);
@@ -893,7 +933,7 @@ function renderPetList() {
   if (!list.length) {
     const empty = document.createElement("p");
     empty.className = "muted";
-    empty.textContent = "暂无宠物记录。";
+    empty.textContent = "暂无灵宠记录。";
     fragment.appendChild(empty);
     dom["pet-list"].appendChild(fragment);
     return;
@@ -904,7 +944,7 @@ function renderPetList() {
     card.className = "entry";
     const member = getMember(item.memberId);
     card.appendChild(makeEntryHead(`${item.name} · ${item.age} 岁`, member.name, () => {
-      removeById("pets", item.id, `${formatCNDate(new Date())}，删除一条宠物记录。`);
+      removeById("pets", item.id, `${formatCNDate(new Date())}，删除一条灵宠记录。`);
     }, member));
     const images = makeImages(item.images);
     if (images) {
@@ -1019,6 +1059,7 @@ function removeById(collectionName, id, logText) {
   state.data[collectionName] = next;
   addLog(logText);
   persistLocalDraft();
+  queueAutoSync();
   if (collectionName === "events") {
     renderCalendar();
     renderSelectedDateEvents();
@@ -1028,6 +1069,65 @@ function removeById(collectionName, id, logText) {
     renderPetList();
   }
   renderLogList();
+}
+
+function getGithubToken() {
+  const inputToken = dom["gh-token"] ? dom["gh-token"].value.trim() : "";
+  if (inputToken) {
+    return inputToken;
+  }
+  const storedToken = localStorage.getItem(STORAGE_KEYS.githubToken) || "";
+  if (storedToken) {
+    return storedToken;
+  }
+  return (APP_CONFIG.persistence.githubToken || "").trim();
+}
+
+function queueAutoSync() {
+  if (!canEdit() || !APP_CONFIG.persistence.autoSyncOnChange) {
+    return;
+  }
+
+  const token = getGithubToken();
+  if (!token) {
+    setSyncStatus("未配置 GitHub Token，当前仅本地保存，跨端不可见。", true);
+    return;
+  }
+
+  if (autoSyncInFlight) {
+    autoSyncDirty = true;
+    return;
+  }
+
+  if (autoSyncTimer) {
+    clearTimeout(autoSyncTimer);
+  }
+
+  autoSyncTimer = window.setTimeout(() => {
+    autoSyncTimer = null;
+    void runAutoSync(token);
+  }, APP_CONFIG.persistence.saveDebounceMs || 1200);
+}
+
+async function runAutoSync(token) {
+  if (autoSyncInFlight) {
+    autoSyncDirty = true;
+    return;
+  }
+  autoSyncInFlight = true;
+  state.githubConfig = readGithubConfigInputs();
+  try {
+    await syncDataFileToGithub(state.githubConfig, token, state.data);
+    setSyncStatus("自动同步成功：已保存到 GitHub。", false);
+  } catch (error) {
+    setSyncStatus(`自动同步失败：${error.message}`, true);
+  } finally {
+    autoSyncInFlight = false;
+    if (autoSyncDirty) {
+      autoSyncDirty = false;
+      queueAutoSync();
+    }
+  }
 }
 
 function addLog(text) {
@@ -1046,7 +1146,7 @@ async function handleSyncToGithub() {
     return;
   }
   const config = readGithubConfigInputs();
-  const token = dom["gh-token"].value.trim();
+  const token = getGithubToken();
   if (!config.owner || !config.repo || !config.branch || !config.dataPath) {
     alert("请完整填写 GitHub Owner/Repo/Branch/Data Path。");
     return;
@@ -1058,6 +1158,9 @@ async function handleSyncToGithub() {
 
   state.githubConfig = config;
   localStorage.setItem(STORAGE_KEYS.githubConfig, JSON.stringify(config));
+  if (token) {
+    localStorage.setItem(STORAGE_KEYS.githubToken, token);
+  }
 
   try {
     setSyncStatus("正在提交到 GitHub...", false);
