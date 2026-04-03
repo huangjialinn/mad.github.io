@@ -383,20 +383,32 @@ async function loadDataFromPages() {
   const config = readGithubConfigInputs();
   state.githubConfig = config;
   const path = config.dataPath || "data/mad-data.json";
+  const localDraft = loadLocalDraft();
 
   try {
     const response = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    const raw = await response.json();
-    state.data = normalizeData(raw);
+    const remoteData = normalizeData(await response.json());
+    if (localDraft) {
+      const localTs = getDataTimestamp(localDraft);
+      const remoteTs = getDataTimestamp(remoteData);
+      if (localTs >= remoteTs) {
+        state.data = localDraft;
+        setSyncStatus(`已读取本地最新草稿（本地时间戳更新）：${path}`, false);
+      } else {
+        state.data = remoteData;
+        setSyncStatus(`读取成功：${path}`, false);
+      }
+    } else {
+      state.data = remoteData;
+      setSyncStatus(`读取成功：${path}`, false);
+    }
     persistLocalDraft(true);
-    setSyncStatus(`读取成功：${path}`, false);
   } catch (error) {
-    const fallback = loadLocalDraft();
-    if (fallback) {
-      state.data = fallback;
+    if (localDraft) {
+      state.data = localDraft;
       setSyncStatus(`读取远程失败，已使用本地草稿：${error.message}`, true);
       return;
     }
@@ -416,6 +428,14 @@ function loadLocalDraft() {
     console.warn("本地草稿损坏", error);
     return null;
   }
+}
+
+function getDataTimestamp(data) {
+  if (!data || !data.updatedAt) {
+    return 0;
+  }
+  const ts = Date.parse(data.updatedAt);
+  return Number.isFinite(ts) ? ts : 0;
 }
 
 function persistLocalDraft(force = false) {
@@ -542,7 +562,7 @@ async function handleEventSubmit(event) {
 
   state.data.events.push(item);
   addLog(`${formatCNDate(date)}，新增一次${EVENT_TYPE_META[type].label}。`);
-  persistLocalDraft();
+  persistLocalDraft(true);
   queueAutoSync();
   renderCalendar();
   renderSelectedDateEvents();
@@ -584,7 +604,7 @@ async function handleHonorSubmit(event) {
     createdBy: state.currentUser.memberId
   });
   addLog(`${formatCNDate(date)}，新增一条全场最佳。`);
-  persistLocalDraft();
+  persistLocalDraft(true);
   queueAutoSync();
   renderHonorList();
   renderLogList();
@@ -624,7 +644,7 @@ async function handlePetSubmit(event) {
     createdBy: state.currentUser.memberId
   });
   addLog(`${formatCNDate(new Date())}，新增一条灵宠记录。`);
-  persistLocalDraft();
+  persistLocalDraft(true);
   queueAutoSync();
   renderPetList();
   renderLogList();
@@ -1058,7 +1078,7 @@ function removeById(collectionName, id, logText) {
   const next = list.filter((item) => item.id !== id);
   state.data[collectionName] = next;
   addLog(logText);
-  persistLocalDraft();
+  persistLocalDraft(true);
   queueAutoSync();
   if (collectionName === "events") {
     renderCalendar();
@@ -1239,13 +1259,14 @@ function utf8ToBase64(text) {
 }
 
 function normalizeData(raw) {
+  const source = raw && typeof raw === "object" ? raw : {};
   return {
-    version: Number(raw.version || 1),
-    updatedAt: raw.updatedAt || new Date().toISOString(),
-    events: Array.isArray(raw.events) ? raw.events : [],
-    honors: Array.isArray(raw.honors) ? raw.honors : [],
-    pets: Array.isArray(raw.pets) ? raw.pets : [],
-    logs: Array.isArray(raw.logs) ? raw.logs : []
+    version: Number(source.version || 1),
+    updatedAt: source.updatedAt || new Date().toISOString(),
+    events: Array.isArray(source.events) ? source.events : [],
+    honors: Array.isArray(source.honors) ? source.honors : [],
+    pets: Array.isArray(source.pets) ? source.pets : [],
+    logs: Array.isArray(source.logs) ? source.logs : []
   };
 }
 
