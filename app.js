@@ -2,6 +2,7 @@
 const APP_CONFIG = {
   siteTitle: "MAD",
   siteTagline: "内部娱乐网站 · 记录你们的高光和糗事",
+  adminPassword: "mad-admin-2026",
   ui: {
     showGithubPanel: false
   },
@@ -43,6 +44,7 @@ const EVENT_TYPE_META = {
 const MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
 const UNKNOWN_MEMBER = { id: "unknown", name: "未知成员", avatar: "https://api.dicebear.com/7.x/shapes/svg?seed=unknown" };
 const EMPTY_COUNTER = Object.freeze({ drink: 0, meal: 0, sport: 0 });
+const ADMIN_ACTOR_ID = "admin";
 
 const state = {
   data: createEmptyData(),
@@ -79,11 +81,9 @@ function cacheDom() {
   const ids = [
     "site-title",
     "site-tagline",
-    "login-member",
-    "login-password",
-    "member-login-form",
+    "admin-password",
+    "admin-login-form",
     "github-panel",
-    "guest-login-btn",
     "logout-btn",
     "login-status",
     "gh-owner",
@@ -183,21 +183,14 @@ function saveGithubConfig() {
 }
 
 function populateMemberControls() {
-  dom["login-member"].innerHTML = "";
   dom["honor-member"].innerHTML = "";
   dom["pet-member"].innerHTML = "";
   dom["event-member-checkboxes"].innerHTML = "";
-  const loginFragment = document.createDocumentFragment();
   const honorFragment = document.createDocumentFragment();
   const petFragment = document.createDocumentFragment();
   const chipsFragment = document.createDocumentFragment();
 
   APP_CONFIG.members.forEach((member) => {
-    const loginOption = document.createElement("option");
-    loginOption.value = member.id;
-    loginOption.textContent = member.name;
-    loginFragment.appendChild(loginOption);
-
     const honorOption = document.createElement("option");
     honorOption.value = member.id;
     honorOption.textContent = member.name;
@@ -224,21 +217,16 @@ function populateMemberControls() {
     chipsFragment.appendChild(chip);
   });
 
-  dom["login-member"].appendChild(loginFragment);
   dom["honor-member"].appendChild(honorFragment);
   dom["pet-member"].appendChild(petFragment);
   dom["event-member-checkboxes"].appendChild(chipsFragment);
 }
 
 function bindEvents() {
-  dom["member-login-form"].addEventListener("submit", handleMemberLogin);
-  dom["guest-login-btn"].addEventListener("click", () => {
-    state.currentUser = { role: "guest", memberId: null, name: "访客" };
-    refreshPermissionUI();
-    setLoginStatus();
-  });
+  dom["admin-login-form"].addEventListener("submit", handleAdminLogin);
   dom["logout-btn"].addEventListener("click", () => {
     state.currentUser = { role: "guest", memberId: null, name: "访客" };
+    dom["admin-password"].value = "";
     refreshPermissionUI();
     setLoginStatus();
   });
@@ -298,32 +286,30 @@ function applyEventTypeRules() {
   dom["event-image-hint"].textContent = hint;
 }
 
-function handleMemberLogin(event) {
+function handleAdminLogin(event) {
   event.preventDefault();
-  const memberId = dom["login-member"].value;
-  const password = dom["login-password"].value;
+  const password = dom["admin-password"].value.trim();
 
-  const target = APP_CONFIG.members.find((member) => member.id === memberId);
-  if (!target || target.password !== password) {
-    alert("成员或密码错误。");
+  if (!password || password !== APP_CONFIG.adminPassword) {
+    alert("管理密码错误。");
     return;
   }
 
   state.currentUser = {
-    role: "member",
-    memberId: target.id,
-    name: target.name
+    role: "admin",
+    memberId: ADMIN_ACTOR_ID,
+    name: "管理员"
   };
-  dom["login-password"].value = "";
+  dom["admin-password"].value = "";
   refreshPermissionUI();
   setLoginStatus();
 }
 
 function setLoginStatus() {
   if (canEdit()) {
-    dom["login-status"].textContent = `当前状态：成员 ${state.currentUser.name}（可编辑）`;
+    dom["login-status"].textContent = `当前状态：${state.currentUser.name}（可编辑）`;
   } else {
-    dom["login-status"].textContent = "当前状态：只读模式（访客）";
+    dom["login-status"].textContent = "当前状态：未登录管理权限（只读）";
   }
 }
 
@@ -340,6 +326,12 @@ function refreshPermissionUI() {
       control.disabled = !editable;
     });
   });
+
+  const adminOnlyBlocks = document.querySelectorAll("[data-admin-only='true']");
+  adminOnlyBlocks.forEach((block) => {
+    block.classList.toggle("hidden", !editable);
+  });
+
   setLoginStatus();
   renderSelectedDateEvents();
   renderHonorList();
@@ -347,7 +339,7 @@ function refreshPermissionUI() {
 }
 
 function canEdit() {
-  return state.currentUser.role === "member";
+  return state.currentUser.role === "admin";
 }
 
 async function loadDataFromPages() {
@@ -940,7 +932,7 @@ function renderLogList() {
   list.forEach((log) => {
     const row = document.createElement("div");
     row.className = "entry";
-    const actor = log.actorId ? getMember(log.actorId).name : "系统";
+    const actor = getActorName(log.actorId);
     row.appendChild(makeParagraph(`${formatDateTime(log.timestamp)} · ${actor}`));
     row.appendChild(makeParagraph(log.text));
     fragment.appendChild(row);
@@ -1166,6 +1158,16 @@ function getMember(memberId) {
   return MEMBER_MAP.get(memberId) || UNKNOWN_MEMBER;
 }
 
+function getActorName(actorId) {
+  if (!actorId) {
+    return "系统";
+  }
+  if (actorId === ADMIN_ACTOR_ID) {
+    return "管理员";
+  }
+  return getMember(actorId).name;
+}
+
 function toMemberNames(memberIds = []) {
   return memberIds.map((id) => getMember(id).name);
 }
@@ -1183,7 +1185,7 @@ function makeId(prefix) {
 }
 
 function toISODate(dateInput) {
-  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  const date = parseDateInput(dateInput);
   const y = date.getFullYear();
   const m = `${date.getMonth() + 1}`.padStart(2, "0");
   const d = `${date.getDate()}`.padStart(2, "0");
@@ -1195,12 +1197,12 @@ function startOfMonth(date) {
 }
 
 function formatCNDate(input) {
-  const date = typeof input === "string" ? new Date(input) : input;
+  const date = parseDateInput(input);
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
 function formatDateTime(input) {
-  const date = typeof input === "string" ? new Date(input) : input;
+  const date = parseDateInput(input);
   const hh = `${date.getHours()}`.padStart(2, "0");
   const mm = `${date.getMinutes()}`.padStart(2, "0");
   return `${formatCNDate(date)} ${hh}:${mm}`;
@@ -1208,4 +1210,22 @@ function formatDateTime(input) {
 
 function sortDescByTime(a, b) {
   return String(b || "").localeCompare(String(a || ""));
+}
+
+function parseDateInput(value) {
+  if (value instanceof Date) {
+    return value;
+  }
+  if (typeof value !== "string") {
+    return new Date(value);
+  }
+  const isoDateOnly = /^(\d{4})-(\d{2})-(\d{2})$/;
+  const matched = value.match(isoDateOnly);
+  if (matched) {
+    const year = Number(matched[1]);
+    const month = Number(matched[2]);
+    const day = Number(matched[3]);
+    return new Date(year, month - 1, day);
+  }
+  return new Date(value);
 }
