@@ -40,6 +40,10 @@ const EVENT_TYPE_META = {
   sport: { label: "群体运动记录", maxImages: 0 }
 };
 
+const MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
+const UNKNOWN_MEMBER = { id: "unknown", name: "未知成员", avatar: "https://api.dicebear.com/7.x/shapes/svg?seed=unknown" };
+const EMPTY_COUNTER = Object.freeze({ drink: 0, meal: 0, sport: 0 });
+
 const state = {
   data: createEmptyData(),
   currentUser: { role: "guest", memberId: null, name: "访客" },
@@ -49,6 +53,9 @@ const state = {
 };
 
 const dom = {};
+let draftPersistHandle = null;
+let draftPersistMode = null;
+let pendingDraftText = "";
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -62,6 +69,7 @@ async function init() {
   setupDefaultDates();
   applyEventTypeRules();
   refreshPermissionUI();
+  window.addEventListener("beforeunload", flushPendingDraftSync);
 
   await loadDataFromPages();
   renderAll();
@@ -179,22 +187,26 @@ function populateMemberControls() {
   dom["honor-member"].innerHTML = "";
   dom["pet-member"].innerHTML = "";
   dom["event-member-checkboxes"].innerHTML = "";
+  const loginFragment = document.createDocumentFragment();
+  const honorFragment = document.createDocumentFragment();
+  const petFragment = document.createDocumentFragment();
+  const chipsFragment = document.createDocumentFragment();
 
   APP_CONFIG.members.forEach((member) => {
     const loginOption = document.createElement("option");
     loginOption.value = member.id;
     loginOption.textContent = member.name;
-    dom["login-member"].appendChild(loginOption);
+    loginFragment.appendChild(loginOption);
 
     const honorOption = document.createElement("option");
     honorOption.value = member.id;
     honorOption.textContent = member.name;
-    dom["honor-member"].appendChild(honorOption);
+    honorFragment.appendChild(honorOption);
 
     const petOption = document.createElement("option");
     petOption.value = member.id;
     petOption.textContent = member.name;
-    dom["pet-member"].appendChild(petOption);
+    petFragment.appendChild(petOption);
 
     const chip = document.createElement("label");
     chip.className = "chip";
@@ -209,8 +221,13 @@ function populateMemberControls() {
 
     chip.appendChild(checkbox);
     chip.appendChild(text);
-    dom["event-member-checkboxes"].appendChild(chip);
+    chipsFragment.appendChild(chip);
   });
+
+  dom["login-member"].appendChild(loginFragment);
+  dom["honor-member"].appendChild(honorFragment);
+  dom["pet-member"].appendChild(petFragment);
+  dom["event-member-checkboxes"].appendChild(chipsFragment);
 }
 
 function bindEvents() {
@@ -324,7 +341,9 @@ function refreshPermissionUI() {
     });
   });
   setLoginStatus();
-  renderAll();
+  renderSelectedDateEvents();
+  renderHonorList();
+  renderPetList();
 }
 
 function canEdit() {
@@ -343,7 +362,7 @@ async function loadDataFromPages() {
     }
     const raw = await response.json();
     state.data = normalizeData(raw);
-    persistLocalDraft();
+    persistLocalDraft(true);
     setSyncStatus(`读取成功：${path}`, false);
   } catch (error) {
     const fallback = loadLocalDraft();
@@ -370,15 +389,62 @@ function loadLocalDraft() {
   }
 }
 
-function persistLocalDraft() {
+function persistLocalDraft(force = false) {
+  pendingDraftText = JSON.stringify(state.data);
+  if (force) {
+    return flushPendingDraftSync();
+  }
+
+  if (draftPersistHandle) {
+    return true;
+  }
+
+  const flush = () => {
+    draftPersistHandle = null;
+    draftPersistMode = null;
+    flushPendingDraftSync();
+  };
+
+  if ("requestIdleCallback" in window) {
+    draftPersistMode = "idle";
+    draftPersistHandle = window.requestIdleCallback(flush, { timeout: 900 });
+  } else {
+    draftPersistMode = "timeout";
+    draftPersistHandle = window.setTimeout(flush, 180);
+  }
+  return true;
+}
+
+function flushPendingDraftSync() {
+  if (!pendingDraftText) {
+    clearPendingPersistHandle();
+    return true;
+  }
+
   try {
-    localStorage.setItem(STORAGE_KEYS.draft, JSON.stringify(state.data));
+    localStorage.setItem(STORAGE_KEYS.draft, pendingDraftText);
+    pendingDraftText = "";
+    clearPendingPersistHandle();
     return true;
   } catch (error) {
     console.warn("本地草稿写入失败", error);
     setSyncStatus("本地草稿空间不足，建议减少图片数量或压缩后再上传。", true);
+    clearPendingPersistHandle();
     return false;
   }
+}
+
+function clearPendingPersistHandle() {
+  if (!draftPersistHandle) {
+    return;
+  }
+  if (draftPersistMode === "idle" && "cancelIdleCallback" in window) {
+    window.cancelIdleCallback(draftPersistHandle);
+  } else if (draftPersistMode === "timeout") {
+    clearTimeout(draftPersistHandle);
+  }
+  draftPersistHandle = null;
+  draftPersistMode = null;
 }
 
 async function handleEventSubmit(event) {
@@ -448,7 +514,9 @@ async function handleEventSubmit(event) {
   state.data.events.push(item);
   addLog(`${formatCNDate(date)}，新增一次${EVENT_TYPE_META[type].label}。`);
   persistLocalDraft();
-  renderAll();
+  renderCalendar();
+  renderSelectedDateEvents();
+  renderLogList();
   dom["event-form"].reset();
   setupDefaultDates();
   applyEventTypeRules();
@@ -487,7 +555,8 @@ async function handleHonorSubmit(event) {
   });
   addLog(`${formatCNDate(date)}，新增一条成员糗事。`);
   persistLocalDraft();
-  renderAll();
+  renderHonorList();
+  renderLogList();
   dom["honor-form"].reset();
   setupDefaultDates();
 }
@@ -525,7 +594,8 @@ async function handlePetSubmit(event) {
   });
   addLog(`${formatCNDate(new Date())}，新增一条宠物记录。`);
   persistLocalDraft();
-  renderAll();
+  renderPetList();
+  renderLogList();
   dom["pet-form"].reset();
 }
 
@@ -643,12 +713,14 @@ function renderCalendar() {
   dom["calendar-title"].textContent = `${year}年 ${month + 1}月`;
 
   dom["calendar-grid"].innerHTML = "";
+  const fragment = document.createDocumentFragment();
+  const countersByDate = buildEventCountersByDate(state.data.events);
   const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
   weekdays.forEach((name) => {
     const el = document.createElement("div");
     el.className = "calendar-weekday";
     el.textContent = name;
-    dom["calendar-grid"].appendChild(el);
+    fragment.appendChild(el);
   });
 
   const firstDay = new Date(year, month, 1);
@@ -676,7 +748,7 @@ function renderCalendar() {
     }
 
     const dateKey = toISODate(dateObj);
-    const counters = countEventsByType(dateKey);
+    const counters = countersByDate.get(dateKey) || EMPTY_COUNTER;
 
     const cell = document.createElement("button");
     cell.type = "button";
@@ -712,8 +784,9 @@ function renderCalendar() {
     }
     cell.appendChild(dots);
 
-    dom["calendar-grid"].appendChild(cell);
+    fragment.appendChild(cell);
   }
+  dom["calendar-grid"].appendChild(fragment);
 }
 
 function makeDot(text, className) {
@@ -723,29 +796,31 @@ function makeDot(text, className) {
   return dot;
 }
 
-function countEventsByType(dateKey) {
-  return state.data.events.reduce(
-    (acc, item) => {
-      if (item.date !== dateKey) {
-        return acc;
-      }
-      if (item.type === "drink") {
-        acc.drink += 1;
-      } else if (item.type === "meal") {
-        acc.meal += 1;
-      } else if (item.type === "sport") {
-        acc.sport += 1;
-      }
-      return acc;
-    },
-    { drink: 0, meal: 0, sport: 0 }
-  );
+function buildEventCountersByDate(events = []) {
+  const map = new Map();
+  for (const item of events) {
+    const key = item.date;
+    if (!key) {
+      continue;
+    }
+    const counter = map.get(key) || { drink: 0, meal: 0, sport: 0 };
+    if (item.type === "drink") {
+      counter.drink += 1;
+    } else if (item.type === "meal") {
+      counter.meal += 1;
+    } else if (item.type === "sport") {
+      counter.sport += 1;
+    }
+    map.set(key, counter);
+  }
+  return map;
 }
 
 function renderSelectedDateEvents() {
   const date = state.selectedDate;
   dom["selected-date-title"].textContent = `${formatCNDate(date)} 事件`;
   dom["selected-date-events"].innerHTML = "";
+  const fragment = document.createDocumentFragment();
 
   const list = state.data.events
     .filter((item) => item.date === date)
@@ -755,7 +830,8 @@ function renderSelectedDateEvents() {
     const empty = document.createElement("p");
     empty.className = "muted";
     empty.textContent = "当天暂无事件。";
-    dom["selected-date-events"].appendChild(empty);
+    fragment.appendChild(empty);
+    dom["selected-date-events"].appendChild(fragment);
     return;
   }
 
@@ -781,19 +857,22 @@ function renderSelectedDateEvents() {
     if (images) {
       card.appendChild(images);
     }
-    dom["selected-date-events"].appendChild(card);
+    fragment.appendChild(card);
   });
+  dom["selected-date-events"].appendChild(fragment);
 }
 
 function renderHonorList() {
   dom["honor-list"].innerHTML = "";
+  const fragment = document.createDocumentFragment();
   const list = [...state.data.honors].sort((a, b) => sortDescByTime(a.createdAt || a.date, b.createdAt || b.date));
 
   if (!list.length) {
     const empty = document.createElement("p");
     empty.className = "muted";
     empty.textContent = "暂无糗事记录。";
-    dom["honor-list"].appendChild(empty);
+    fragment.appendChild(empty);
+    dom["honor-list"].appendChild(fragment);
     return;
   }
 
@@ -809,19 +888,22 @@ function renderHonorList() {
     if (images) {
       card.appendChild(images);
     }
-    dom["honor-list"].appendChild(card);
+    fragment.appendChild(card);
   });
+  dom["honor-list"].appendChild(fragment);
 }
 
 function renderPetList() {
   dom["pet-list"].innerHTML = "";
+  const fragment = document.createDocumentFragment();
   const list = [...state.data.pets].sort((a, b) => sortDescByTime(a.createdAt, b.createdAt));
 
   if (!list.length) {
     const empty = document.createElement("p");
     empty.className = "muted";
     empty.textContent = "暂无宠物记录。";
-    dom["pet-list"].appendChild(empty);
+    fragment.appendChild(empty);
+    dom["pet-list"].appendChild(fragment);
     return;
   }
 
@@ -836,19 +918,22 @@ function renderPetList() {
     if (images) {
       card.appendChild(images);
     }
-    dom["pet-list"].appendChild(card);
+    fragment.appendChild(card);
   });
+  dom["pet-list"].appendChild(fragment);
 }
 
 function renderLogList() {
   dom["log-list"].innerHTML = "";
+  const fragment = document.createDocumentFragment();
   const list = [...state.data.logs].sort((a, b) => sortDescByTime(a.timestamp, b.timestamp)).slice(0, 80);
 
   if (!list.length) {
     const empty = document.createElement("p");
     empty.className = "muted";
     empty.textContent = "暂无更新日志。";
-    dom["log-list"].appendChild(empty);
+    fragment.appendChild(empty);
+    dom["log-list"].appendChild(fragment);
     return;
   }
 
@@ -858,8 +943,9 @@ function renderLogList() {
     const actor = log.actorId ? getMember(log.actorId).name : "系统";
     row.appendChild(makeParagraph(`${formatDateTime(log.timestamp)} · ${actor}`));
     row.appendChild(makeParagraph(log.text));
-    dom["log-list"].appendChild(row);
+    fragment.appendChild(row);
   });
+  dom["log-list"].appendChild(fragment);
 }
 
 function makeEntryHead(title, extra, onDelete, member) {
@@ -873,6 +959,8 @@ function makeEntryHead(title, extra, onDelete, member) {
     avatar.className = "avatar";
     avatar.src = member.avatar;
     avatar.alt = member.name;
+    avatar.loading = "lazy";
+    avatar.decoding = "async";
     person.appendChild(avatar);
     const txt = document.createElement("strong");
     txt.textContent = title;
@@ -917,6 +1005,8 @@ function makeImages(images = []) {
     const img = document.createElement("img");
     img.src = src;
     img.alt = "上传图片";
+    img.loading = "lazy";
+    img.decoding = "async";
     wrap.appendChild(img);
   });
   return wrap;
@@ -934,7 +1024,15 @@ function removeById(collectionName, id, logText) {
   state.data[collectionName] = next;
   addLog(logText);
   persistLocalDraft();
-  renderAll();
+  if (collectionName === "events") {
+    renderCalendar();
+    renderSelectedDateEvents();
+  } else if (collectionName === "honors") {
+    renderHonorList();
+  } else if (collectionName === "pets") {
+    renderPetList();
+  }
+  renderLogList();
 }
 
 function addLog(text) {
@@ -1065,8 +1163,7 @@ function createEmptyData() {
 }
 
 function getMember(memberId) {
-  return APP_CONFIG.members.find((member) => member.id === memberId)
-    || { id: "unknown", name: "未知成员", avatar: "https://api.dicebear.com/7.x/shapes/svg?seed=unknown" };
+  return MEMBER_MAP.get(memberId) || UNKNOWN_MEMBER;
 }
 
 function toMemberNames(memberIds = []) {
@@ -1075,7 +1172,7 @@ function toMemberNames(memberIds = []) {
 
 function setSyncStatus(message, isError) {
   dom["sync-status"].textContent = `同步状态：${message}`;
-  dom["sync-status"].style.borderColor = isError ? "rgba(255, 104, 104, 0.35)" : "rgba(118, 255, 175, 0.2)";
+  dom["sync-status"].style.borderColor = isError ? "rgba(207, 63, 69, 0.35)" : "rgba(92, 107, 255, 0.28)";
 }
 
 function makeId(prefix) {
