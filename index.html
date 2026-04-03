@@ -44,7 +44,7 @@
       <p id="login-status" class="status">当前状态：未登录（只读）</p>
     </section>
 
-    <section class="card">
+    <section class="card" id="github-panel">
       <h2>GitHub Pages 持久化</h2>
       <p class="muted">
         页面默认读取 <code>data/mad-data.json</code>。成员编辑后可点击“同步到 GitHub”提交 JSON 到仓库，下一次进入页面会自动读取最新数据。
@@ -119,8 +119,8 @@
           </div>
           <label id="event-images-wrap">
             图片
-            <input id="event-images" type="file" accept="image/*" multiple>
-            <small id="event-image-hint" class="muted">喝酒最多 1 张；吃饭最多 9 张；运动不需要图片。</small>
+            <input id="event-images" type="file" accept="image/*" multiple capture="environment">
+            <small id="event-image-hint" class="muted">喝酒最多 1 张；吃饭最多 9 张；运动不需要图片。手机建议单张 8MB 以内。</small>
           </label>
           <button type="submit">新增事件</button>
         </form>
@@ -143,7 +143,7 @@
           </label>
           <label>
             图片（最多 9 张）
-            <input id="honor-images" type="file" accept="image/*" multiple>
+            <input id="honor-images" type="file" accept="image/*" multiple capture="environment">
           </label>
           <button type="submit">新增糗事</button>
         </form>
@@ -167,7 +167,7 @@
           </label>
           <label>
             图片（最多 9 张）
-            <input id="pet-images" type="file" accept="image/*" multiple>
+            <input id="pet-images" type="file" accept="image/*" multiple capture="environment">
           </label>
           <button type="submit">新增宠物</button>
         </form>

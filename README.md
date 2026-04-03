@@ -12,6 +12,8 @@
 - `siteTagline`：副标题
 - `members`：8 位成员的 `name / avatar / password`
 - `githubDefaults`：默认 GitHub 仓库信息
+- `ui.showGithubPanel`：是否显示“GitHub Pages 持久化”面板（默认 `false`，隐藏）
+- `upload`：手机上传优化参数（大小限制、压缩参数）
 
 ## 3. 权限规则
 - 成员登录（8 位成员 + 密码）后可新增/删除内容
@@ -21,9 +23,10 @@
 - 页面加载时读取 `data/mad-data.json` 并展示
 - 成员编辑后，点击“同步到 GitHub”可通过 GitHub API 提交 JSON
 - 下一次进入页面会读取该 JSON 的最新内容
+- 如果本地草稿空间不足（手机常见），页面会提示并继续新增，不会直接中断
 
 ## 5. GitHub 同步配置
-在页面“GitHub Pages 持久化”区域填写：
+当 `ui.showGithubPanel = true` 时，在页面“GitHub Pages 持久化”区域填写：
 - `Owner`
 - `Repo`
 - `Branch`
@@ -32,9 +35,14 @@
 
 说明：
 - Token 仅在当前页面内使用，不写入仓库文件
-- 若未同步到 GitHub，数据仍会保存在浏览器本地草稿（localStorage）
+- 若未同步到 GitHub，数据会尝试保存到浏览器本地草稿（`localStorage`）
 
-## 6. 功能清单
+## 6. 移动端上传说明
+- 上传控件支持手机相册/拍照（`capture="environment"`）
+- 单张图片默认限制 `12MB`，批量总大小默认限制 `24MB`
+- 上传时会自动压缩大图（最长边 1600，JPEG 质量 0.82），减少手机端失败概率
+
+## 7. 功能清单
 - 事件记录日历
   - 喝酒记录：地点 + 参与成员 + 最多 1 图
   - 吃饭记录：地点 + 参与成员 + Y其林评分（-3~3）+ 最多 9 图

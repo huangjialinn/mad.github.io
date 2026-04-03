@@ -2,6 +2,15 @@
 const APP_CONFIG = {
   siteTitle: "MAD",
   siteTagline: "内部娱乐网站 · 记录你们的高光和糗事",
+  ui: {
+    showGithubPanel: false
+  },
+  upload: {
+    maxSingleImageMB: 12,
+    maxBatchImageMB: 24,
+    autoCompressMaxSide: 1600,
+    jpegQuality: 0.82
+  },
   members: [
     { id: "m1", name: "阿凯", avatar: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Kai", password: "mad001" },
     { id: "m2", name: "阿林", avatar: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Lin", password: "mad002" },
@@ -46,6 +55,7 @@ document.addEventListener("DOMContentLoaded", init);
 async function init() {
   cacheDom();
   applyHeader();
+  applyFeatureVisibility();
   initGithubConfig();
   populateMemberControls();
   bindEvents();
@@ -64,6 +74,7 @@ function cacheDom() {
     "login-member",
     "login-password",
     "member-login-form",
+    "github-panel",
     "guest-login-btn",
     "logout-btn",
     "login-status",
@@ -120,6 +131,12 @@ function applyHeader() {
   document.title = APP_CONFIG.siteTitle;
   dom["site-title"].textContent = APP_CONFIG.siteTitle;
   dom["site-tagline"].textContent = APP_CONFIG.siteTagline;
+}
+
+function applyFeatureVisibility() {
+  if (!APP_CONFIG.ui.showGithubPanel && dom["github-panel"]) {
+    dom["github-panel"].classList.add("hidden");
+  }
 }
 
 function initGithubConfig() {
@@ -354,7 +371,14 @@ function loadLocalDraft() {
 }
 
 function persistLocalDraft() {
-  localStorage.setItem(STORAGE_KEYS.draft, JSON.stringify(state.data));
+  try {
+    localStorage.setItem(STORAGE_KEYS.draft, JSON.stringify(state.data));
+    return true;
+  } catch (error) {
+    console.warn("本地草稿写入失败", error);
+    setSyncStatus("本地草稿空间不足，建议减少图片数量或压缩后再上传。", true);
+    return false;
+  }
 }
 
 async function handleEventSubmit(event) {
@@ -510,7 +534,27 @@ async function readImageFiles(fileList, maxCount) {
   if (files.length > maxCount) {
     throw new Error(`最多上传 ${maxCount} 张图片。`);
   }
-  return Promise.all(files.map(readFileAsDataUrl));
+  const maxSingleBytes = APP_CONFIG.upload.maxSingleImageMB * 1024 * 1024;
+  const maxBatchBytes = APP_CONFIG.upload.maxBatchImageMB * 1024 * 1024;
+
+  const result = [];
+  let totalBytes = 0;
+  for (const file of files) {
+    if (!file.type || !file.type.startsWith("image/")) {
+      throw new Error(`文件类型不支持：${file.name}`);
+    }
+    if (file.size > maxSingleBytes) {
+      throw new Error(`单张图片不能超过 ${APP_CONFIG.upload.maxSingleImageMB}MB：${file.name}`);
+    }
+
+    const optimized = await readAndOptimizeImage(file);
+    totalBytes += estimateDataUrlBytes(optimized);
+    if (totalBytes > maxBatchBytes) {
+      throw new Error(`本次上传图片总大小不能超过 ${APP_CONFIG.upload.maxBatchImageMB}MB。`);
+    }
+    result.push(optimized);
+  }
+  return result;
 }
 
 function readFileAsDataUrl(file) {
@@ -520,6 +564,62 @@ function readFileAsDataUrl(file) {
     reader.onerror = () => reject(new Error(`读取图片失败：${file.name}`));
     reader.readAsDataURL(file);
   });
+}
+
+async function readAndOptimizeImage(file) {
+  const rawDataUrl = await readFileAsDataUrl(file);
+  const maxSide = APP_CONFIG.upload.autoCompressMaxSide;
+
+  let image;
+  try {
+    image = await loadImage(rawDataUrl);
+  } catch (error) {
+    return rawDataUrl;
+  }
+
+  const width = image.naturalWidth || image.width;
+  const height = image.naturalHeight || image.height;
+  if (!width || !height) {
+    return rawDataUrl;
+  }
+
+  const scale = Math.min(1, maxSide / Math.max(width, height));
+  const targetWidth = Math.max(1, Math.round(width * scale));
+  const targetHeight = Math.max(1, Math.round(height * scale));
+
+  if (scale === 1 && file.size <= 2 * 1024 * 1024) {
+    return rawDataUrl;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return rawDataUrl;
+  }
+  ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+  const compressed = canvas.toDataURL("image/jpeg", APP_CONFIG.upload.jpegQuality);
+  if (!compressed || compressed.length >= rawDataUrl.length) {
+    return rawDataUrl;
+  }
+  return compressed;
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+}
+
+function estimateDataUrlBytes(dataUrl) {
+  const parts = String(dataUrl).split(",");
+  const base64 = parts.length > 1 ? parts[1] : "";
+  return Math.ceil((base64.length * 3) / 4);
 }
 
 function getCheckedMemberIds() {
