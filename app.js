@@ -91,10 +91,11 @@ function cacheDom() {
     "site-title",
     "site-tagline",
     "top-ticker-track",
+    "manage-toggle-btn",
+    "login-panel",
     "admin-password",
     "admin-login-form",
     "github-panel",
-    "logout-btn",
     "login-status",
     "gh-owner",
     "gh-repo",
@@ -148,6 +149,7 @@ function cacheDom() {
 function applyHeader() {
   document.title = APP_CONFIG.siteTitle;
   dom["site-title"].textContent = APP_CONFIG.siteTitle;
+  dom["site-title"].setAttribute("data-text", APP_CONFIG.siteTitle);
   dom["site-tagline"].textContent = APP_CONFIG.siteTagline;
   renderTicker();
 }
@@ -158,15 +160,30 @@ function renderTicker() {
     return;
   }
   const text = (APP_CONFIG.tickerText || "TEST").trim() || "TEST";
+  const makeGroup = (ariaHidden) => {
+    const group = document.createElement("div");
+    group.className = "top-ticker-group";
+    if (ariaHidden) {
+      group.setAttribute("aria-hidden", "true");
+    }
+    for (let i = 0; i < 10; i += 1) {
+      const span = document.createElement("span");
+      span.className = "top-ticker-item";
+      span.textContent = text;
+      group.appendChild(span);
+    }
+    return group;
+  };
   const fragment = document.createDocumentFragment();
-  for (let i = 0; i < 6; i += 1) {
-    const span = document.createElement("span");
-    span.className = "top-ticker-item";
-    span.textContent = text;
-    fragment.appendChild(span);
-  }
+  fragment.appendChild(makeGroup(false));
+  fragment.appendChild(makeGroup(true));
   track.innerHTML = "";
   track.appendChild(fragment);
+
+  // restart animation after content updates
+  track.style.animation = "none";
+  void track.offsetWidth;
+  track.style.animation = "";
 }
 
 function applyFeatureVisibility() {
@@ -262,12 +279,7 @@ function populateMemberControls() {
 
 function bindEvents() {
   dom["admin-login-form"].addEventListener("submit", handleAdminLogin);
-  dom["logout-btn"].addEventListener("click", () => {
-    state.currentUser = { role: "guest", memberId: null, name: "访客" };
-    dom["admin-password"].value = "";
-    refreshPermissionUI();
-    setLoginStatus();
-  });
+  dom["manage-toggle-btn"].addEventListener("click", handleManageToggle);
 
   dom["event-type"].addEventListener("change", applyEventTypeRules);
   dom["event-form"].addEventListener("submit", handleEventSubmit);
@@ -297,6 +309,30 @@ function bindEvents() {
     renderAll();
   });
   dom["sync-github-btn"].addEventListener("click", handleSyncToGithub);
+}
+
+function handleManageToggle() {
+  if (canEdit()) {
+    state.currentUser = { role: "guest", memberId: null, name: "访客" };
+    dom["admin-password"].value = "";
+    toggleLoginPanel(false);
+    refreshPermissionUI();
+    setLoginStatus();
+    return;
+  }
+
+  const shouldShow = dom["login-panel"].classList.contains("hidden");
+  toggleLoginPanel(shouldShow);
+  if (shouldShow) {
+    dom["admin-password"].focus();
+  }
+}
+
+function toggleLoginPanel(show) {
+  if (!dom["login-panel"]) {
+    return;
+  }
+  dom["login-panel"].classList.toggle("hidden", !show);
 }
 
 function setupDefaultDates() {
@@ -340,6 +376,7 @@ function handleAdminLogin(event) {
   };
   dom["admin-password"].value = "";
   applyBuiltinGithubTokenForAdmin();
+  toggleLoginPanel(false);
   refreshPermissionUI();
   setLoginStatus();
 }
@@ -356,6 +393,9 @@ function applyBuiltinGithubTokenForAdmin() {
 }
 
 function setLoginStatus() {
+  if (dom["manage-toggle-btn"]) {
+    dom["manage-toggle-btn"].textContent = canEdit() ? "退出管理模式" : "进入管理模式";
+  }
   if (canEdit()) {
     dom["login-status"].textContent = `当前状态：${state.currentUser.name}（可编辑）`;
   } else {

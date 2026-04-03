@@ -11,8 +11,10 @@
 </head>
 <body>
   <div class="bg-radial"></div>
+  <div class="bg-image"></div>
   <div class="bg-aurora"></div>
   <div class="bg-stars"></div>
+  <div class="bg-stars-far"></div>
   <div class="bg-starflow"></div>
   <div class="bg-grid"></div>
   <div class="page">
@@ -21,15 +23,18 @@
     </div>
 
     <header class="hero">
-      <div>
+      <div class="hero-main">
         <p class="kicker">MAD Club</p>
-        <h1 id="site-title">一车面包人</h1>
+        <h1 id="site-title" class="hero-title">一车面包人</h1>
         <p id="site-tagline">内部娱乐网站 · 记录你们的高光和糗事</p>
       </div>
-      <p class="hero-tip">未登录时仅可浏览。输入管理密码后可新增与删除内容。</p>
+      <div class="hero-side">
+        <button id="manage-toggle-btn" type="button" class="ghost">进入管理模式</button>
+        <p class="hero-tip">未登录时仅可浏览。点击管理后输入密码可新增与删除内容。</p>
+      </div>
     </header>
 
-    <section class="card">
+    <section id="login-panel" class="card hidden">
       <h2>登录与权限</h2>
       <div class="login-grid">
         <form id="admin-login-form" class="inline-form" data-edit-only="false">
@@ -39,9 +44,6 @@
           </label>
           <button type="submit">进入管理模式</button>
         </form>
-        <div class="actions">
-          <button id="logout-btn" type="button" class="ghost">退出管理模式</button>
-        </div>
       </div>
       <p id="login-status" class="status">当前状态：未登录管理权限（只读）</p>
     </section>

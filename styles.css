@@ -47,10 +47,22 @@ body {
   animation: nebula-shift 18s ease-in-out infinite alternate;
 }
 
+.bg-image {
+  position: fixed;
+  inset: -4%;
+  z-index: -4;
+  background: url("./背景.png") center center / cover no-repeat;
+  opacity: 0.16;
+  mix-blend-mode: screen;
+  filter: saturate(0.95) contrast(1.04) blur(0.2px);
+  animation: bg-image-drift 36s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
 .bg-aurora {
   position: fixed;
   inset: -12%;
-  z-index: -4;
+  z-index: -3;
   background:
     conic-gradient(from 120deg at 70% 30%, transparent 0deg, rgba(111, 125, 255, 0.15) 68deg, transparent 118deg),
     conic-gradient(from 30deg at 24% 70%, transparent 0deg, rgba(39, 210, 255, 0.12) 78deg, transparent 145deg);
@@ -61,23 +73,41 @@ body {
 
 .bg-stars {
   position: fixed;
-  inset: 0;
-  z-index: -3;
+  inset: -12%;
+  z-index: -2;
   background-image:
-    radial-gradient(2px 2px at 16% 22%, rgba(255, 255, 255, 0.72), transparent),
-    radial-gradient(1.5px 1.5px at 78% 34%, rgba(255, 255, 255, 0.64), transparent),
-    radial-gradient(1.8px 1.8px at 66% 72%, rgba(255, 255, 255, 0.6), transparent),
-    radial-gradient(1.6px 1.6px at 28% 80%, rgba(255, 255, 255, 0.5), transparent),
-    radial-gradient(1px 1px at 48% 48%, rgba(255, 255, 255, 0.7), transparent),
-    radial-gradient(1.2px 1.2px at 88% 84%, rgba(255, 255, 255, 0.56), transparent);
-  animation: star-twinkle 3.8s ease-in-out infinite alternate;
+    radial-gradient(1.8px 1.8px at 16% 22%, rgba(255, 255, 255, 0.78), transparent),
+    radial-gradient(1.2px 1.2px at 78% 34%, rgba(255, 255, 255, 0.68), transparent),
+    radial-gradient(1.6px 1.6px at 66% 72%, rgba(255, 255, 255, 0.62), transparent),
+    radial-gradient(1.2px 1.2px at 28% 80%, rgba(255, 255, 255, 0.56), transparent),
+    radial-gradient(1px 1px at 48% 48%, rgba(255, 255, 255, 0.72), transparent),
+    radial-gradient(1.2px 1.2px at 88% 84%, rgba(255, 255, 255, 0.6), transparent);
+  background-size: 360px 360px, 310px 310px, 430px 430px, 340px 340px, 270px 270px, 390px 390px;
+  animation: star-twinkle 3.8s ease-in-out infinite alternate, star-drift 72s linear infinite;
+  pointer-events: none;
+}
+
+.bg-stars-far {
+  position: fixed;
+  inset: -10%;
+  z-index: -2;
+  background-image:
+    radial-gradient(1px 1px at 14% 10%, rgba(235, 244, 255, 0.38), transparent),
+    radial-gradient(1px 1px at 64% 16%, rgba(227, 242, 255, 0.34), transparent),
+    radial-gradient(1px 1px at 88% 52%, rgba(233, 246, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 48% 84%, rgba(229, 241, 255, 0.28), transparent),
+    radial-gradient(1px 1px at 22% 70%, rgba(231, 243, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 78% 78%, rgba(220, 238, 255, 0.32), transparent);
+  background-size: 520px 520px, 600px 600px, 560px 560px, 540px 540px, 620px 620px, 580px 580px;
+  opacity: 0.8;
+  animation: star-drift-slow 120s linear infinite;
   pointer-events: none;
 }
 
 .bg-starflow {
   position: fixed;
   inset: -12%;
-  z-index: -2;
+  z-index: -1;
   background-image:
     radial-gradient(2px 2px at 12% 22%, rgba(188, 211, 255, 0.4), transparent),
     radial-gradient(1.6px 1.6px at 72% 36%, rgba(194, 236, 255, 0.34), transparent),
@@ -104,6 +134,17 @@ body {
   animation: starflow-sparse 54s linear infinite;
 }
 
+.bg-starflow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(112deg, transparent 18%, rgba(180, 207, 255, 0.22) 24%, transparent 31%) 0 0 / 420px 420px,
+    linear-gradient(129deg, transparent 52%, rgba(194, 239, 255, 0.18) 58%, transparent 65%) 0 0 / 520px 520px;
+  opacity: 0;
+  animation: shooting-star 9s ease-in-out infinite;
+}
+
 .bg-grid {
   position: fixed;
   inset: 0;
@@ -120,6 +161,8 @@ body {
   width: min(1220px, 94vw);
   margin: 20px auto 58px;
   padding-inline: 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .top-ticker {
@@ -133,6 +176,15 @@ body {
   position: relative;
 }
 
+.top-ticker::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(130deg, rgba(118, 144, 255, 0.1), transparent 34%, rgba(39, 210, 255, 0.12) 72%, transparent);
+}
+
 .top-ticker::after {
   content: "";
   position: absolute;
@@ -143,46 +195,52 @@ body {
 
 .top-ticker-track {
   display: flex;
-  gap: 22px;
   white-space: nowrap;
-  padding: 10px 0;
+  padding: 9px 0;
   width: max-content;
-  animation: ticker-scroll 18s linear infinite;
+  will-change: transform;
+  animation: ticker-scroll 14s linear infinite;
+}
+
+.top-ticker-group {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .top-ticker-item {
+  display: inline-flex;
+  align-items: center;
   color: #d9e4ff;
   font-size: 0.9rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 600;
   font-family: "IBM Plex Mono", monospace;
-  padding-right: 22px;
+  padding: 0 24px;
   position: relative;
 }
 
 .top-ticker-item::after {
-  content: "•";
+  content: "✦";
   position: absolute;
-  right: 6px;
+  right: -4px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(171, 192, 255, 0.74);
+  color: rgba(171, 192, 255, 0.78);
 }
 
 .hero {
-  border: 1px solid var(--line);
-  border-radius: calc(var(--radius) + 2px);
-  padding: 24px;
-  background:
-    linear-gradient(170deg, rgba(15, 24, 44, 0.94), rgba(10, 17, 33, 0.92)),
-    radial-gradient(circle at 88% 0%, rgba(39, 210, 255, 0.16), transparent 42%);
-  box-shadow: var(--shadow);
+  padding: 14px 4px 4px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 20px;
   animation: fade-up 420ms ease-out both;
+}
+
+.hero-main {
+  min-width: 0;
 }
 
 .kicker {
@@ -205,6 +263,30 @@ h1 {
   letter-spacing: -0.02em;
 }
 
+.hero-title {
+  position: relative;
+  width: fit-content;
+  color: #edf3ff;
+  background: linear-gradient(110deg, #ecf2ff 8%, #a5c8ff 42%, #80e4ff 58%, #f4f7ff 78%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 26px rgba(110, 145, 255, 0.42), 0 0 50px rgba(39, 210, 255, 0.24);
+  animation: title-shimmer 6.2s linear infinite, title-float 4.5s ease-in-out infinite;
+}
+
+.hero-title::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: rgba(167, 194, 255, 0.32);
+  filter: blur(8px);
+  transform: translate3d(0, 0, 0);
+  animation: title-halo 4.5s ease-in-out infinite;
+}
+
 h2 {
   margin: 0 0 14px;
   font-size: 1.08rem;
@@ -221,6 +303,17 @@ h3 {
   max-width: 340px;
   line-height: 1.5;
   color: var(--muted);
+}
+
+.hero-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+#manage-toggle-btn {
+  min-width: 136px;
 }
 
 .card {
@@ -307,7 +400,7 @@ h3 {
 }
 
 .login-grid {
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr;
 }
 
 .inline-form {
@@ -670,6 +763,15 @@ code {
   }
 }
 
+@keyframes bg-image-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(12px, -8px, 0) scale(1.03);
+  }
+}
+
 @keyframes star-twinkle {
   0% {
     opacity: 0.55;
@@ -679,12 +781,52 @@ code {
   }
 }
 
+@keyframes star-drift {
+  0% {
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+  }
+  100% {
+    background-position: -360px 360px, 310px -310px, -430px 430px, 340px -340px, -270px 270px, 390px -390px;
+  }
+}
+
+@keyframes star-drift-slow {
+  0% {
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+  }
+  100% {
+    background-position: -520px 520px, 600px -600px, -560px 560px, 540px -540px, -620px 620px, 580px -580px;
+  }
+}
+
 @keyframes starflow {
   0% {
     background-position: 0 0, 0 0, 0 0, 0 0;
   }
   100% {
     background-position: -340px 340px, 300px -300px, -260px 260px, -520px 520px;
+  }
+}
+
+@keyframes shooting-star {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  14% {
+    opacity: 0.55;
+  }
+  30% {
+    opacity: 0;
+    transform: translate3d(-120px, 90px, 0);
+  }
+  64% {
+    opacity: 0.45;
+  }
+  84% {
+    opacity: 0;
+    transform: translate3d(-180px, 130px, 0);
   }
 }
 
@@ -703,6 +845,35 @@ code {
   }
   100% {
     transform: translateX(-50%);
+  }
+}
+
+@keyframes title-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes title-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+@keyframes title-halo {
+  0%,
+  100% {
+    opacity: 0.28;
+  }
+  50% {
+    opacity: 0.5;
   }
 }
 
@@ -747,11 +918,17 @@ code {
 
   .hero {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .hero-side {
+    width: 100%;
+    align-items: flex-start;
   }
 
   .top-ticker-track {
-    gap: 14px;
-    animation-duration: 14s;
+    animation-duration: 12s;
   }
 
 }
