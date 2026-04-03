@@ -231,16 +231,19 @@ body {
 }
 
 .hero {
-  padding: 14px 4px 4px;
+  padding: 18px 4px 6px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
   animation: fade-up 420ms ease-out both;
 }
 
 .hero-main {
   min-width: 0;
+  text-align: center;
+  width: 100%;
 }
 
 .kicker {
@@ -258,9 +261,9 @@ body {
 }
 
 h1 {
-  margin: 10px 0 8px;
-  font-size: clamp(2rem, 3.2vw, 2.9rem);
-  letter-spacing: -0.02em;
+  margin: 12px 0 8px;
+  font-size: clamp(2.6rem, 4.4vw, 4.2rem);
+  letter-spacing: -0.03em;
 }
 
 .hero-title {
@@ -272,8 +275,12 @@ h1 {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 26px rgba(110, 145, 255, 0.42), 0 0 50px rgba(39, 210, 255, 0.24);
-  animation: title-shimmer 6.2s linear infinite, title-float 4.5s ease-in-out infinite;
+  text-shadow:
+    0 0 18px rgba(110, 145, 255, 0.55),
+    0 0 40px rgba(39, 210, 255, 0.3),
+    0 0 80px rgba(131, 163, 255, 0.22);
+  animation: title-shimmer 5.8s linear infinite, title-float 4.5s ease-in-out infinite, title-glow 3.6s ease-in-out infinite;
+  margin-inline: auto;
 }
 
 .hero-title::after {
@@ -308,8 +315,9 @@ h3 {
 .hero-side {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 10px;
+  text-align: center;
 }
 
 #manage-toggle-btn {
@@ -874,6 +882,22 @@ code {
   }
   50% {
     opacity: 0.5;
+  }
+}
+
+@keyframes title-glow {
+  0%,
+  100% {
+    text-shadow:
+      0 0 16px rgba(110, 145, 255, 0.5),
+      0 0 36px rgba(39, 210, 255, 0.26),
+      0 0 70px rgba(131, 163, 255, 0.2);
+  }
+  50% {
+    text-shadow:
+      0 0 26px rgba(118, 156, 255, 0.75),
+      0 0 56px rgba(86, 232, 255, 0.4),
+      0 0 110px rgba(156, 194, 255, 0.3);
   }
 }
 

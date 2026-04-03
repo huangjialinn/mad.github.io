@@ -1,11 +1,11 @@
-/* 可修改配置：站点名称、标语、成员资料、云端持久化接口 */
+﻿/* 可修改配置：站点名称、标语、成员资料、云端持久化接口 */
 const APP_CONFIG = {
   siteTitle: "一车面包人",
   siteTagline: "内部娱乐网站 · 记录你们的高光和糗事",
   tickerText: "TEST",
   adminPassword: "2026",
   ui: {
-    showCloudPanel: true
+    showCloudPanel: false
   },
   persistence: {
     autoSyncOnChange: true,
@@ -1368,3 +1368,4 @@ function parseDateInput(value) {
   }
   return new Date(value);
 }
+
