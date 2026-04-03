@@ -5,12 +5,12 @@ const APP_CONFIG = {
   tickerText: "TEST",
   adminPassword: "2026",
   ui: {
-    showGithubPanel: false
+    showGithubPanel: true
   },
   persistence: {
     autoSyncOnChange: true,
-    saveDebounceMs: 1200,
-    githubToken: ""
+    saveDebounceMs: 0,
+    githubToken: "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"
   },
   upload: {
     maxSingleImageMB: 12,
@@ -65,7 +65,6 @@ const dom = {};
 let draftPersistHandle = null;
 let draftPersistMode = null;
 let pendingDraftText = "";
-let autoSyncTimer = null;
 let autoSyncInFlight = false;
 let autoSyncDirty = false;
 
@@ -187,7 +186,7 @@ function initGithubConfig() {
     }
   }
   fillGithubInputs();
-  const token = localStorage.getItem(STORAGE_KEYS.githubToken) || APP_CONFIG.persistence.githubToken || "";
+  const token = localStorage.getItem(STORAGE_KEYS.githubToken) || "";
   if (dom["gh-token"]) {
     dom["gh-token"].value = token;
   }
@@ -215,6 +214,8 @@ function saveGithubConfig() {
   const token = dom["gh-token"] ? dom["gh-token"].value.trim() : "";
   if (token) {
     localStorage.setItem(STORAGE_KEYS.githubToken, token);
+  } else {
+    localStorage.removeItem(STORAGE_KEYS.githubToken);
   }
   setSyncStatus("已保存 GitHub 配置。", false);
 }
@@ -338,8 +339,20 @@ function handleAdminLogin(event) {
     name: "管理员"
   };
   dom["admin-password"].value = "";
+  applyBuiltinGithubTokenForAdmin();
   refreshPermissionUI();
   setLoginStatus();
+}
+
+function applyBuiltinGithubTokenForAdmin() {
+  const token = (APP_CONFIG.persistence.githubToken || "").trim();
+  if (!token || !canEdit()) {
+    return;
+  }
+  if (dom["gh-token"]) {
+    dom["gh-token"].value = token;
+  }
+  localStorage.setItem(STORAGE_KEYS.githubToken, token);
 }
 
 function setLoginStatus() {
@@ -1118,15 +1131,7 @@ function queueAutoSync() {
     autoSyncDirty = true;
     return;
   }
-
-  if (autoSyncTimer) {
-    clearTimeout(autoSyncTimer);
-  }
-
-  autoSyncTimer = window.setTimeout(() => {
-    autoSyncTimer = null;
-    void runAutoSync(token);
-  }, APP_CONFIG.persistence.saveDebounceMs || 1200);
+  void runAutoSync(token);
 }
 
 async function runAutoSync(token) {
