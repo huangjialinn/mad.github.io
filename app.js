@@ -2,7 +2,7 @@
 const APP_CONFIG = {
   siteTitle: "MAD",
   siteTagline: "内部娱乐网站 · 记录你们的高光和糗事",
-  adminPassword: "mad-admin-2026",
+  adminPassword: "2026",
   ui: {
     showGithubPanel: false
   },
@@ -13,14 +13,14 @@ const APP_CONFIG = {
     jpegQuality: 0.82
   },
   members: [
-    { id: "m1", name: "阿凯", avatar: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Kai", password: "mad001" },
-    { id: "m2", name: "阿林", avatar: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Lin", password: "mad002" },
-    { id: "m3", name: "阿哲", avatar: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Zhe", password: "mad003" },
-    { id: "m4", name: "阿宇", avatar: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Yu", password: "mad004" },
-    { id: "m5", name: "阿周", avatar: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Zhou", password: "mad005" },
-    { id: "m6", name: "阿南", avatar: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Nan", password: "mad006" },
-    { id: "m7", name: "阿浩", avatar: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Hao", password: "mad007" },
-    { id: "m8", name: "阿飞", avatar: "https://api.dicebear.com/7.x/fun-emoji/svg?seed=Fei", password: "mad008" }
+    { id: "m1", name: "YG", avatar: "./p1.png" },
+    { id: "m2", name: "P1P", avatar: "./p2.png" },
+    { id: "m3", name: "烟", avatar: "./p3.png" },
+    { id: "m4", name: "轩", avatar: "./p4.png" },
+    { id: "m5", name: "陶子", avatar: "./p5.png" },
+    { id: "m6", name: "亚索", avatar: "./p6.png" },
+    { id: "m7", name: "姜行", avatar: "./p7.png" },
+    { id: "m8", name: "二", avatar: "./p8.png" }
   ],
   githubDefaults: {
     owner: "huangjialinn",
@@ -42,7 +42,7 @@ const EVENT_TYPE_META = {
 };
 
 const MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
-const UNKNOWN_MEMBER = { id: "unknown", name: "未知成员", avatar: "https://api.dicebear.com/7.x/shapes/svg?seed=unknown" };
+const UNKNOWN_MEMBER = { id: "unknown", name: "未知成员", avatar: "./p1.png" };
 const EMPTY_COUNTER = Object.freeze({ drink: 0, meal: 0, sport: 0 });
 const ADMIN_ACTOR_ID = "admin";
 
@@ -953,7 +953,10 @@ function makeEntryHead(title, extra, onDelete, member) {
     avatar.alt = member.name;
     avatar.loading = "lazy";
     avatar.decoding = "async";
-    person.appendChild(avatar);
+    const avatarShell = document.createElement("span");
+    avatarShell.className = "avatar-shell";
+    avatarShell.appendChild(avatar);
+    person.appendChild(avatarShell);
     const txt = document.createElement("strong");
     txt.textContent = title;
     person.appendChild(txt);
