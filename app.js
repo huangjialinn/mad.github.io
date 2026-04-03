@@ -13,14 +13,14 @@ const APP_CONFIG = {
     jpegQuality: 0.82
   },
   members: [
-    { id: "m1", name: "YG", avatar: "./p1.png" },
-    { id: "m2", name: "P1P", avatar: "./p2.png" },
-    { id: "m3", name: "烟", avatar: "./p3.png" },
-    { id: "m4", name: "轩", avatar: "./p4.png" },
-    { id: "m5", name: "陶子", avatar: "./p5.png" },
-    { id: "m6", name: "亚索", avatar: "./p6.png" },
-    { id: "m7", name: "姜行", avatar: "./p7.png" },
-    { id: "m8", name: "二", avatar: "./p8.png" }
+    { id: "m1", name: "YG", avatar: "./png/p1.png" },
+    { id: "m2", name: "P1P", avatar: "./png/p2.png" },
+    { id: "m3", name: "烟", avatar: "./png/p3.png" },
+    { id: "m4", name: "轩", avatar: "./png/p4.png" },
+    { id: "m5", name: "陶子", avatar: "./png/p5.png" },
+    { id: "m6", name: "亚索", avatar: "./png/p6.png" },
+    { id: "m7", name: "姜行", avatar: "./png/p7.png" },
+    { id: "m8", name: "二", avatar: "./png/p8.png" }
   ],
   githubDefaults: {
     owner: "huangjialinn",
@@ -42,7 +42,7 @@ const EVENT_TYPE_META = {
 };
 
 const MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
-const UNKNOWN_MEMBER = { id: "unknown", name: "未知成员", avatar: "./p1.png" };
+const UNKNOWN_MEMBER = { id: "unknown", name: "未知成员", avatar: "./png/p1.png" };
 const EMPTY_COUNTER = Object.freeze({ drink: 0, meal: 0, sport: 0 });
 const ADMIN_ACTOR_ID = "admin";
 
@@ -65,6 +65,7 @@ async function init() {
   cacheDom();
   applyHeader();
   applyFeatureVisibility();
+  startIntroAnimation();
   initGithubConfig();
   populateMemberControls();
   bindEvents();
@@ -81,6 +82,7 @@ function cacheDom() {
   const ids = [
     "site-title",
     "site-tagline",
+    "intro-overlay",
     "admin-password",
     "admin-login-form",
     "github-panel",
@@ -133,6 +135,36 @@ function cacheDom() {
   ids.forEach((id) => {
     dom[id] = document.getElementById(id);
   });
+}
+
+function startIntroAnimation() {
+  const overlay = dom["intro-overlay"];
+  if (!overlay) {
+    return;
+  }
+
+  let ended = false;
+  const endIntro = () => {
+    if (ended) {
+      return;
+    }
+    ended = true;
+    overlay.classList.add("intro-leave");
+    document.body.classList.add("intro-done");
+    window.setTimeout(() => {
+      if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+    }, 900);
+  };
+
+  window.setTimeout(endIntro, 3200);
+  overlay.addEventListener("click", endIntro, { once: true });
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      endIntro();
+    }
+  }, { once: true });
 }
 
 function applyHeader() {

@@ -36,6 +36,101 @@ body {
   overflow-x: hidden;
 }
 
+body:not(.intro-done) {
+  overflow: hidden;
+}
+
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(129, 153, 255, 0.28), transparent 38%),
+    linear-gradient(180deg, rgba(4, 7, 16, 0.98), rgba(2, 4, 10, 0.98));
+  animation: intro-fade-in 380ms ease-out both;
+}
+
+.intro-core {
+  width: min(680px, 90vw);
+  border: 1px solid rgba(140, 170, 255, 0.42);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(13, 22, 42, 0.95), rgba(7, 13, 27, 0.96));
+  box-shadow:
+    0 28px 60px rgba(0, 0, 0, 0.56),
+    0 0 0 1px rgba(94, 126, 211, 0.2) inset;
+  padding: 28px 26px 30px;
+  text-align: center;
+}
+
+.intro-kicker {
+  margin: 0;
+  color: #9fb0de;
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.intro-logo {
+  margin: 10px 0 2px;
+  font-size: clamp(2.5rem, 8vw, 4.6rem);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #f1f4ff;
+  text-shadow: 0 0 24px rgba(107, 131, 255, 0.48);
+}
+
+.intro-sub {
+  margin: 0 0 18px;
+  color: #9aa9d1;
+  font-size: 0.95rem;
+}
+
+.intro-tags {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  perspective: 900px;
+}
+
+.flip-tag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(132, 165, 255, 0.46);
+  background: linear-gradient(180deg, rgba(19, 32, 62, 0.95), rgba(11, 19, 37, 0.94));
+  color: #dfe7ff;
+  font-size: 0.86rem;
+  white-space: nowrap;
+  transform-origin: left center;
+  animation: tag-page-flip 2.6s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+  animation-delay: calc(var(--i) * 0.2s);
+  backface-visibility: hidden;
+  box-shadow: 0 8px 18px rgba(12, 21, 46, 0.46);
+}
+
+.flip-tag::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.12), transparent 42%, rgba(86, 120, 223, 0.2));
+  opacity: 0.62;
+}
+
+.intro-leave {
+  animation: intro-fade-out 700ms ease-in forwards;
+}
+
 .bg-radial {
   position: fixed;
   inset: -8%;
@@ -649,6 +744,26 @@ code {
   }
 }
 
+@keyframes intro-fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes intro-fade-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+}
+
 @keyframes nebula-shift {
   0% {
     transform: translate3d(0, 0, 0) scale(1);
@@ -694,6 +809,23 @@ code {
   }
   100% {
     background-position: -300px 300px, 260px -260px, -320px 320px, 240px -240px;
+  }
+}
+
+@keyframes tag-page-flip {
+  0%,
+  55%,
+  100% {
+    transform: perspective(900px) rotateY(0deg);
+    filter: brightness(1);
+  }
+  24% {
+    transform: perspective(900px) rotateY(-68deg);
+    filter: brightness(1.08);
+  }
+  35% {
+    transform: perspective(900px) rotateY(-25deg);
+    filter: brightness(1.02);
   }
 }
 
@@ -752,6 +884,10 @@ code {
   .top-ticker-track {
     gap: 14px;
     animation-duration: 14s;
+  }
+
+  .intro-core {
+    padding: 24px 18px 24px;
   }
 }
 
