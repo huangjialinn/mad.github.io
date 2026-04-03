@@ -1,8 +1,8 @@
 ﻿/* 可修改配置：站点名称、标语、成员资料、云端持久化接口 */
 const APP_CONFIG = {
   siteTitle: "一车面包人",
-  siteTagline: "内部娱乐网站 · 记录你们的高光和糗事",
-  tickerText: "TEST",
+  siteTagline: "这是一个减肥群",
+  tickerText: "李柏辰是GAY",
   adminPassword: "2026",
   ui: {
     showCloudPanel: false
@@ -21,12 +21,12 @@ const APP_CONFIG = {
   },
   members: [
     { id: "m1", name: "YG", avatar: "./png/p1.png" },
-    { id: "m2", name: "P1P", avatar: "./png/p2.png" },
+    { id: "m2", name: "P1", avatar: "./png/p2.png" },
     { id: "m3", name: "烟", avatar: "./png/p3.png" },
     { id: "m4", name: "轩", avatar: "./png/p4.png" },
-    { id: "m5", name: "陶子", avatar: "./png/p5.png" },
-    { id: "m6", name: "亚索", avatar: "./png/p6.png" },
-    { id: "m7", name: "姜行", avatar: "./png/p7.png" },
+    { id: "m5", name: "陶", avatar: "./png/p5.png" },
+    { id: "m6", name: "柏", avatar: "./png/p6.png" },
+    { id: "m7", name: "姜", avatar: "./png/p7.png" },
     { id: "m8", name: "二", avatar: "./png/p8.png" }
   ],
   cloudDefaults: {
@@ -40,9 +40,9 @@ const STORAGE_KEYS = {
 };
 
 const EVENT_TYPE_META = {
-  drink: { label: "喝酒搞事", maxImages: 1 },
-  meal: { label: "吃饭搞事", maxImages: 9 },
-  sport: { label: "群体运动搞事", maxImages: 0 }
+  drink: { label: "DRINK", maxImages: 1 },
+  meal: { label: "HUNT", maxImages: 9 },
+  sport: { label: "SPORT", maxImages: 0 }
 };
 
 const MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
