@@ -257,15 +257,20 @@ function populateMemberControls() {
 }
 
 function bindEvents() {
-  dom["admin-login-form"].addEventListener("submit", handleAdminLogin);
-  dom["manage-toggle-btn"].addEventListener("click", handleManageToggle);
+  addDomListener("admin-login-form", "submit", handleAdminLogin);
+  addDomListener("manage-toggle-btn", "click", handleManageToggle);
+  // Mobile fallback: some browsers may miss click when layered effects are present.
+  addDomListener("manage-toggle-btn", "touchend", (event) => {
+    event.preventDefault();
+    handleManageToggle();
+  });
 
-  dom["event-type"].addEventListener("change", applyEventTypeRules);
-  dom["event-form"].addEventListener("submit", handleEventSubmit);
-  dom["honor-form"].addEventListener("submit", handleHonorSubmit);
-  dom["pet-form"].addEventListener("submit", handlePetSubmit);
+  addDomListener("event-type", "change", applyEventTypeRules);
+  addDomListener("event-form", "submit", handleEventSubmit);
+  addDomListener("honor-form", "submit", handleHonorSubmit);
+  addDomListener("pet-form", "submit", handlePetSubmit);
 
-  dom["prev-month-btn"].addEventListener("click", () => {
+  addDomListener("prev-month-btn", "click", () => {
     state.calendarMonth = new Date(
       state.calendarMonth.getFullYear(),
       state.calendarMonth.getMonth() - 1,
@@ -273,7 +278,7 @@ function bindEvents() {
     );
     renderCalendar();
   });
-  dom["next-month-btn"].addEventListener("click", () => {
+  addDomListener("next-month-btn", "click", () => {
     state.calendarMonth = new Date(
       state.calendarMonth.getFullYear(),
       state.calendarMonth.getMonth() + 1,
@@ -282,15 +287,28 @@ function bindEvents() {
     renderCalendar();
   });
 
-  dom["save-api-config-btn"].addEventListener("click", saveCloudConfig);
-  dom["reload-data-btn"].addEventListener("click", async () => {
+  addDomListener("save-api-config-btn", "click", saveCloudConfig);
+  addDomListener("reload-data-btn", "click", async () => {
     await loadDataFromCloud();
     renderAll();
   });
-  dom["sync-cloud-btn"].addEventListener("click", handleSyncToCloud);
+  addDomListener("sync-cloud-btn", "click", handleSyncToCloud);
+}
+
+function addDomListener(id, eventName, handler) {
+  const element = dom[id];
+  if (!element) {
+    console.warn(`缺少节点，已跳过事件绑定：#${id}`);
+    return;
+  }
+  element.addEventListener(eventName, handler);
 }
 
 function handleManageToggle() {
+  if (!dom["login-panel"]) {
+    alert("登录面板加载失败，请刷新页面后重试。");
+    return;
+  }
   if (canEdit()) {
     state.currentUser = { role: "guest", memberId: null, name: "访客" };
     state.adminSessionPassword = "";
@@ -304,7 +322,13 @@ function handleManageToggle() {
   const shouldShow = dom["login-panel"].classList.contains("hidden");
   toggleLoginPanel(shouldShow);
   if (shouldShow) {
-    dom["admin-password"].focus();
+    if (dom["admin-password"]) {
+      dom["admin-password"].focus();
+    }
+    if (dom["login-panel"] && typeof dom["login-panel"].scrollIntoView === "function") {
+      dom["login-panel"].scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    setSyncStatus("请输入管理密码后提交。", false);
   }
 }
 
