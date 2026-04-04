@@ -10,7 +10,7 @@ const APP_CONFIG = {
   persistence: {
     autoSyncOnChange: true,
     saveDebounceMs: 0,
-    cloudApiBase: "",
+    cloudApiBase: "https://mad-data-worker.409901483.workers.dev",
     localDataPath: "data/mad-data.json"
   },
   upload: {
