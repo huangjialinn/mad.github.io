@@ -41,40 +41,90 @@ body {
 }
 
 .bg-image {
-  position: fixed;
-  inset: -4%;
-  z-index: -4;
-  background: url("./背景.png") center center / cover no-repeat;
-  opacity: 0.9;
-  mix-blend-mode: normal;
-  filter: saturate(1.05) contrast(1.08);
-  transform: scale(1.06);
-  animation: bg-image-drift 48s ease-in-out infinite alternate;
-  pointer-events: none;
+  display: none;
 }
 
 .bg-aurora {
-  display: none;
+  position: fixed;
+  inset: -8%;
+  z-index: -4;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(110, 145, 255, 0.18), transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(39, 210, 255, 0.14), transparent 38%),
+    radial-gradient(circle at 40% 80%, rgba(142, 172, 255, 0.12), transparent 42%),
+    linear-gradient(160deg, #060915, #05070f 45%, #04060d);
+  opacity: 0.9;
+  filter: blur(18px);
+  animation: aurora-drift 22s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .bg-stars {
-  display: none;
+  position: fixed;
+  inset: -12%;
+  z-index: -3;
+  background-image:
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1px 1px at 35% 75%, rgba(224, 237, 255, 0.7), transparent),
+    radial-gradient(1.2px 1.2px at 70% 30%, rgba(210, 235, 255, 0.75), transparent),
+    radial-gradient(1px 1px at 85% 65%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.4px 1.4px at 55% 50%, rgba(235, 246, 255, 0.8), transparent);
+  background-size: 520px 520px, 600px 600px, 560px 560px, 640px 640px, 700px 700px;
+  animation: starflow 48s linear infinite, star-twinkle 4.2s ease-in-out infinite alternate;
+  pointer-events: none;
 }
 
 .bg-stars-far {
-  display: none;
+  position: fixed;
+  inset: -16%;
+  z-index: -3;
+  background-image:
+    radial-gradient(1px 1px at 12% 12%, rgba(210, 230, 255, 0.45), transparent),
+    radial-gradient(0.9px 0.9px at 42% 22%, rgba(220, 238, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 68% 78%, rgba(220, 238, 255, 0.35), transparent),
+    radial-gradient(0.8px 0.8px at 80% 40%, rgba(210, 230, 255, 0.35), transparent),
+    radial-gradient(0.9px 0.9px at 25% 85%, rgba(220, 238, 255, 0.4), transparent);
+  background-size: 900px 900px, 820px 820px, 980px 980px, 860px 860px, 940px 940px;
+  opacity: 0.75;
+  animation: star-drift-slow 120s linear infinite;
+  pointer-events: none;
 }
 
 .bg-starflow {
-  display: none;
+  position: fixed;
+  inset: -10%;
+  z-index: -2;
+  background-image:
+    linear-gradient(120deg, transparent 20%, rgba(120, 155, 255, 0.08) 34%, transparent 48%),
+    linear-gradient(200deg, transparent 30%, rgba(80, 210, 255, 0.1) 44%, transparent 58%);
+  background-size: 800px 800px, 980px 980px;
+  opacity: 0.7;
+  animation: starflow 36s linear infinite;
+  pointer-events: none;
 }
 
 .bg-starflow::before {
-  display: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.2px 1.2px at 18% 28%, rgba(235, 246, 255, 0.55), transparent),
+    radial-gradient(1px 1px at 62% 62%, rgba(220, 238, 255, 0.45), transparent),
+    radial-gradient(1px 1px at 82% 36%, rgba(210, 230, 255, 0.4), transparent);
+  background-size: 620px 620px, 720px 720px, 680px 680px;
+  animation: star-drift 90s linear infinite;
+  opacity: 0.6;
 }
 
 .bg-starflow::after {
-  display: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(112deg, transparent 18%, rgba(180, 207, 255, 0.18) 24%, transparent 31%) 0 0 / 520px 520px,
+    linear-gradient(129deg, transparent 52%, rgba(194, 239, 255, 0.14) 58%, transparent 65%) 0 0 / 600px 600px;
+  opacity: 0.35;
+  animation: shooting-star 10s ease-in-out infinite;
 }
 
 .bg-grid {
@@ -186,7 +236,7 @@ body {
 
 h1 {
   margin: 12px 0 8px;
-  font-size: clamp(3.2rem, 5.6vw, 5.2rem);
+  font-size: clamp(3.6rem, 6.4vw, 5.8rem);
   letter-spacing: -0.03em;
 }
 
@@ -207,7 +257,7 @@ h1 {
     title-shimmer 5.8s linear infinite,
     title-float 4.5s ease-in-out infinite,
     title-glow 3.6s ease-in-out infinite,
-    title-breathe 3.2s linear infinite;
+    title-breathe 3s linear infinite;
   margin-inline: auto;
 }
 
@@ -831,16 +881,16 @@ code {
 
 @keyframes title-breathe {
   0% {
-    filter: drop-shadow(0 0 0 rgba(120, 160, 255, 0.0));
-    opacity: 0.9;
+    filter: drop-shadow(0 0 0 rgba(120, 160, 255, 0));
+    opacity: 0.85;
   }
   50% {
-    filter: drop-shadow(0 0 16px rgba(120, 160, 255, 0.55));
+    filter: drop-shadow(0 0 20px rgba(120, 160, 255, 0.65));
     opacity: 1;
   }
   100% {
-    filter: drop-shadow(0 0 0 rgba(120, 160, 255, 0.0));
-    opacity: 0.9;
+    filter: drop-shadow(0 0 0 rgba(120, 160, 255, 0));
+    opacity: 0.85;
   }
 }
 
