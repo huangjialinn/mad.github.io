@@ -4,13 +4,8 @@ const APP_CONFIG = {
   siteTagline: "这是一个减肥群",
   tickerText: "李柏辰是GAY",
   adminPassword: "2026",
-  ui: {
-    showCloudPanel: false
-  },
   persistence: {
-    autoSyncOnChange: true,
     saveDebounceMs: 0,
-    cloudApiBase: "https://mad-data-worker.409901483.workers.dev",
     localDataPath: "data/mad-data.json"
   },
   upload: {
@@ -29,14 +24,10 @@ const APP_CONFIG = {
     { id: "m7", name: "姜", avatar: "./png/p7.png" },
     { id: "m8", name: "二", avatar: "./png/p8.png" }
   ],
-  cloudDefaults: {
-    endpoint: ""
-  }
 };
 
 const STORAGE_KEYS = {
-  draft: "mad_local_draft_v1",
-  cloudConfig: "mad_cloud_config_v1"
+  draft: "mad_local_draft_v1"
 };
 
 const EVENT_TYPE_META = {
@@ -54,26 +45,19 @@ const state = {
   data: createEmptyData(),
   currentUser: { role: "guest", memberId: null, name: "访客" },
   selectedDate: toISODate(new Date()),
-  calendarMonth: startOfMonth(new Date()),
-  cloudConfig: { ...APP_CONFIG.cloudDefaults },
-  adminSessionPassword: ""
+  calendarMonth: startOfMonth(new Date())
 };
 
 const dom = {};
 let draftPersistHandle = null;
 let draftPersistMode = null;
 let pendingDraftText = "";
-let autoSyncInFlight = false;
-let autoSyncDirty = false;
-let autoSyncPromise = null;
 
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
   cacheDom();
   applyHeader();
-  applyFeatureVisibility();
-  initCloudConfig();
   populateMemberControls();
   bindEvents();
   setupDefaultDates();
@@ -81,7 +65,7 @@ async function init() {
   refreshPermissionUI();
   window.addEventListener("beforeunload", flushPendingDraftSync);
 
-  await loadDataFromCloud();
+  await loadDataFromLocal();
   renderAll();
 }
 
@@ -94,13 +78,7 @@ function cacheDom() {
     "login-panel",
     "admin-password",
     "admin-login-form",
-    "cloud-panel",
     "login-status",
-    "api-endpoint",
-    "save-api-config-btn",
-    "reload-data-btn",
-    "sync-cloud-btn",
-    "sync-status",
     "prev-month-btn",
     "next-month-btn",
     "calendar-title",
@@ -181,41 +159,6 @@ function renderTicker() {
   track.style.animation = "";
 }
 
-function applyFeatureVisibility() {
-  if (!APP_CONFIG.ui.showCloudPanel && dom["cloud-panel"]) {
-    dom["cloud-panel"].classList.add("hidden");
-  }
-}
-
-function initCloudConfig() {
-  const stored = localStorage.getItem(STORAGE_KEYS.cloudConfig);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      state.cloudConfig = { ...state.cloudConfig, ...parsed };
-    } catch (error) {
-      console.warn("云端配置读取失败，将使用默认配置", error);
-    }
-  }
-  fillCloudInputs();
-}
-
-function fillCloudInputs() {
-  dom["api-endpoint"].value = state.cloudConfig.endpoint || APP_CONFIG.persistence.cloudApiBase || "";
-}
-
-function readCloudConfigInputs() {
-  return {
-    endpoint: dom["api-endpoint"].value.trim()
-  };
-}
-
-function saveCloudConfig() {
-  state.cloudConfig = readCloudConfigInputs();
-  localStorage.setItem(STORAGE_KEYS.cloudConfig, JSON.stringify(state.cloudConfig));
-  setSyncStatus("已保存云端配置。", false);
-}
-
 function populateMemberControls() {
   dom["honor-member"].innerHTML = "";
   dom["pet-member"].innerHTML = "";
@@ -287,12 +230,6 @@ function bindEvents() {
     renderCalendar();
   });
 
-  addDomListener("save-api-config-btn", "click", saveCloudConfig);
-  addDomListener("reload-data-btn", "click", async () => {
-    await loadDataFromCloud();
-    renderAll();
-  });
-  addDomListener("sync-cloud-btn", "click", handleSyncToCloud);
 }
 
 function addDomListener(id, eventName, handler) {
@@ -311,7 +248,6 @@ function handleManageToggle() {
   }
   if (canEdit()) {
     state.currentUser = { role: "guest", memberId: null, name: "访客" };
-    state.adminSessionPassword = "";
     dom["admin-password"].value = "";
     toggleLoginPanel(false);
     refreshPermissionUI();
@@ -328,7 +264,6 @@ function handleManageToggle() {
     if (dom["login-panel"] && typeof dom["login-panel"].scrollIntoView === "function") {
       dom["login-panel"].scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    setSyncStatus("请输入管理密码后提交。", false);
   }
 }
 
@@ -367,22 +302,14 @@ function applyEventTypeRules() {
 async function handleAdminLogin(event) {
   event.preventDefault();
   const password = dom["admin-password"].value.trim();
-  const cloudConfig = { ...readCloudConfigInputs(), endpoint: getCloudEndpoint() };
-  state.cloudConfig = cloudConfig;
 
   if (!password) {
     alert("请输入管理密码。");
     return;
   }
 
-  if (!cloudConfig.endpoint) {
-    alert("请先配置云端接口地址，再进入管理模式。");
-    return;
-  }
-
-  const verified = await verifyAdminPassword(cloudConfig, password);
-  if (!verified) {
-    alert("管理密码错误或云端认证失败。");
+  if (password !== APP_CONFIG.adminPassword) {
+    alert("管理密码错误。");
     return;
   }
 
@@ -391,25 +318,10 @@ async function handleAdminLogin(event) {
     memberId: ADMIN_ACTOR_ID,
     name: "管理员"
   };
-  state.adminSessionPassword = password;
   dom["admin-password"].value = "";
   toggleLoginPanel(false);
   refreshPermissionUI();
   setLoginStatus();
-}
-
-async function verifyAdminPassword(config, password) {
-  const endpoint = buildCloudApiUrl(config.endpoint, "/auth");
-  try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "X-Admin-Password": password }
-    });
-    return response.ok;
-  } catch (error) {
-    setSyncStatus(`云端认证失败：${error.message}`, true);
-    return false;
-  }
 }
 
 function setLoginStatus() {
@@ -452,33 +364,8 @@ function canEdit() {
   return state.currentUser.role === "admin";
 }
 
-async function loadDataFromCloud() {
-  const endpoint = getCloudEndpoint();
-  state.cloudConfig = { ...state.cloudConfig, endpoint };
+async function loadDataFromLocal() {
   const localDraft = loadLocalDraft();
-
-  if (endpoint) {
-    const path = buildCloudApiUrl(endpoint, "/mad-data");
-    try {
-      const response = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      state.data = normalizeData(await response.json());
-      setSyncStatus("已从云端读取最新数据。", false);
-      persistLocalDraft(true);
-      return;
-    } catch (error) {
-      if (localDraft) {
-        state.data = localDraft;
-        setSyncStatus(`读取云端失败，已使用本地草稿：${error.message}`, true);
-        return;
-      }
-      state.data = createEmptyData();
-      setSyncStatus(`读取云端失败，已初始化空数据：${error.message}`, true);
-      return;
-    }
-  }
 
   const localPath = APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
   try {
@@ -492,24 +379,19 @@ async function loadDataFromCloud() {
       const fileTs = getDataTimestamp(localFileData);
       if (draftTs >= fileTs) {
         state.data = localDraft;
-        setSyncStatus("未配置云端接口，已读取本地最新草稿。", true);
       } else {
         state.data = localFileData;
-        setSyncStatus("未配置云端接口，已读取本地数据文件。", true);
       }
     } else {
       state.data = localFileData;
-      setSyncStatus("未配置云端接口，已读取本地数据文件。", true);
     }
     persistLocalDraft(true);
   } catch (error) {
     if (localDraft) {
       state.data = localDraft;
-      setSyncStatus(`读取本地数据失败，已使用本地草稿：${error.message}`, true);
       return;
     }
     state.data = createEmptyData();
-    setSyncStatus(`读取本地数据失败，已初始化空数据：${error.message}`, true);
   }
 }
 
@@ -659,10 +541,6 @@ async function handleEventSubmit(event) {
   state.data.events.push(item);
   addLog(`${formatCNDate(date)}，新增一次${EVENT_TYPE_META[type].label}。`);
   persistLocalDraft(true);
-  const synced = await queueAutoSync();
-  if (!synced) {
-    alert("云端自动同步失败：本地已保存草稿，请稍后点击“同步到云端”。");
-  }
   renderCalendar();
   renderSelectedDateEvents();
   renderLogList();
@@ -704,10 +582,6 @@ async function handleHonorSubmit(event) {
   });
   addLog(`${formatCNDate(date)}，新增一条全场最佳。`);
   persistLocalDraft(true);
-  const synced = await queueAutoSync();
-  if (!synced) {
-    alert("云端自动同步失败：本地已保存草稿，请稍后点击“同步到云端”。");
-  }
   renderHonorList();
   renderLogList();
   dom["honor-form"].reset();
@@ -747,10 +621,6 @@ async function handlePetSubmit(event) {
   });
   addLog(`${formatCNDate(new Date())}，新增一条灵宠记录。`);
   persistLocalDraft(true);
-  const synced = await queueAutoSync();
-  if (!synced) {
-    alert("云端自动同步失败：本地已保存草稿，请稍后点击“同步到云端”。");
-  }
   renderPetList();
   renderLogList();
   dom["pet-form"].reset();
@@ -1184,10 +1054,6 @@ async function removeById(collectionName, id, logText) {
   state.data[collectionName] = next;
   addLog(logText);
   persistLocalDraft(true);
-  const synced = await queueAutoSync();
-  if (!synced) {
-    alert("云端自动同步失败：本地已保存草稿，请稍后点击“同步到云端”。");
-  }
   if (collectionName === "events") {
     renderCalendar();
     renderSelectedDateEvents();
@@ -1197,51 +1063,6 @@ async function removeById(collectionName, id, logText) {
     renderPetList();
   }
   renderLogList();
-}
-
-function queueAutoSync() {
-  if (!canEdit() || !APP_CONFIG.persistence.autoSyncOnChange) {
-    return Promise.resolve(true);
-  }
-
-  const endpoint = getCloudEndpoint();
-  if (!endpoint) {
-    setSyncStatus("未配置云端接口地址，当前仅本地保存，跨端不可见。", true);
-    return Promise.resolve(false);
-  }
-  if (!state.adminSessionPassword) {
-    setSyncStatus("管理会话已失效，请重新进入管理模式。", true);
-    return Promise.resolve(false);
-  }
-
-  autoSyncDirty = true;
-  if (!autoSyncPromise) {
-    autoSyncPromise = runAutoSync().finally(() => {
-      autoSyncPromise = null;
-    });
-  }
-  return autoSyncPromise;
-}
-
-async function runAutoSync() {
-  let lastSuccess = true;
-  while (autoSyncDirty) {
-    autoSyncDirty = false;
-    autoSyncInFlight = true;
-    state.cloudConfig = { ...state.cloudConfig, endpoint: getCloudEndpoint() };
-    try {
-      await syncDataToCloud(state.cloudConfig, state.adminSessionPassword, state.data);
-      setSyncStatus("自动同步成功：已保存到云端。", false);
-      lastSuccess = true;
-    } catch (error) {
-      setSyncStatus(`自动同步失败：${error.message}`, true);
-      lastSuccess = false;
-      break;
-    } finally {
-      autoSyncInFlight = false;
-    }
-  }
-  return lastSuccess;
 }
 
 function addLog(text) {
@@ -1255,76 +1076,6 @@ function addLog(text) {
   state.data.updatedAt = new Date().toISOString();
 }
 
-async function handleSyncToCloud() {
-  if (!canEdit()) {
-    return;
-  }
-  const endpoint = getCloudEndpoint();
-  if (!endpoint) {
-    alert("请先填写云端接口地址。");
-    return;
-  }
-  const config = { ...readCloudConfigInputs(), endpoint };
-  if (!state.adminSessionPassword) {
-    alert("管理会话已失效，请重新登录管理模式。");
-    return;
-  }
-
-  state.cloudConfig = config;
-  localStorage.setItem(STORAGE_KEYS.cloudConfig, JSON.stringify(config));
-
-  try {
-    setSyncStatus("正在提交到云端...", false);
-    await syncDataToCloud(config, state.adminSessionPassword, state.data);
-    setSyncStatus("同步成功：数据已提交到云端。", false);
-  } catch (error) {
-    setSyncStatus(`同步失败：${error.message}`, true);
-  }
-}
-
-async function syncDataToCloud(config, adminPassword, data) {
-  const endpoint = buildCloudApiUrl(config.endpoint, "/mad-data");
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Admin-Password": adminPassword
-    },
-    body: JSON.stringify(data)
-  });
-  if (!response.ok) {
-    throw new Error(await extractApiError(response));
-  }
-}
-
-function getCloudEndpoint() {
-  const inputValue = dom["api-endpoint"] ? dom["api-endpoint"].value.trim() : "";
-  if (inputValue) {
-    return inputValue;
-  }
-  if (state.cloudConfig.endpoint) {
-    return state.cloudConfig.endpoint;
-  }
-  return (APP_CONFIG.persistence.cloudApiBase || "").trim();
-}
-
-function buildCloudApiUrl(baseUrl, pathname) {
-  const base = String(baseUrl || "").trim();
-  if (!base) {
-    return "";
-  }
-  const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
-  return `${normalizedBase}${pathname}`;
-}
-
-async function extractApiError(response) {
-  try {
-    const json = await response.json();
-    return json.message || `${response.status} ${response.statusText}`;
-  } catch (error) {
-    return `${response.status} ${response.statusText}`;
-  }
-}
 
 function normalizeData(raw) {
   const source = raw && typeof raw === "object" ? raw : {};
@@ -1367,10 +1118,6 @@ function toMemberNames(memberIds = []) {
   return memberIds.map((id) => getMember(id).name);
 }
 
-function setSyncStatus(message, isError) {
-  dom["sync-status"].textContent = `同步状态：${message}`;
-  dom["sync-status"].style.borderColor = isError ? "rgba(207, 63, 69, 0.35)" : "rgba(92, 107, 255, 0.28)";
-}
 
 function makeId(prefix) {
   if (window.crypto && typeof window.crypto.randomUUID === "function") {

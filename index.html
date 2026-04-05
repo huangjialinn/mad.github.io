@@ -48,25 +48,6 @@
       <p id="login-status" class="status">当前状态：未登录管理权限（只读）</p>
     </section>
 
-    <section class="card hidden" id="cloud-panel">
-      <h2>云端持久化</h2>
-      <p class="muted">
-        配置 Cloudflare Worker 接口后，进入管理模式的新增/删除会自动同步到云端；其他设备刷新后即可看到最新内容。
-      </p>
-      <div class="github-grid">
-        <label class="token-label">
-          API Endpoint
-          <input id="api-endpoint" type="text" placeholder="https://your-worker.your-subdomain.workers.dev">
-        </label>
-      </div>
-      <div class="actions">
-        <button id="save-api-config-btn" type="button" class="ghost">保存配置</button>
-        <button id="reload-data-btn" type="button" class="ghost">重新加载数据</button>
-        <button id="sync-cloud-btn" type="button" data-edit-only="true">同步到云端</button>
-      </div>
-      <p id="sync-status" class="status">同步状态：未操作</p>
-    </section>
-
     <section class="layout">
       <article class="card span-2">
         <h2>搞事日历</h2>
