@@ -5,7 +5,9 @@ const APP_CONFIG = {
   tickerText: "李柏辰是GAY",
   adminPassword: "2026",
   persistence: {
+    autoSyncOnChange: true,
     saveDebounceMs: 0,
+    cloudApiBase: "",
     localDataPath: "data/mad-data.json"
   },
   upload: {
@@ -45,13 +47,17 @@ const state = {
   data: createEmptyData(),
   currentUser: { role: "guest", memberId: null, name: "访客" },
   selectedDate: toISODate(new Date()),
-  calendarMonth: startOfMonth(new Date())
+  calendarMonth: startOfMonth(new Date()),
+  adminSessionPassword: ""
 };
 
 const dom = {};
 let draftPersistHandle = null;
 let draftPersistMode = null;
 let pendingDraftText = "";
+let cloudSyncTimer = null;
+let cloudSyncInFlight = false;
+let cloudSyncDirty = false;
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -65,7 +71,7 @@ async function init() {
   refreshPermissionUI();
   window.addEventListener("beforeunload", flushPendingDraftSync);
 
-  await loadDataFromLocal();
+  await loadDataFromStorage();
   renderAll();
 }
 
@@ -78,6 +84,7 @@ function cacheDom() {
     "login-panel",
     "admin-password",
     "admin-login-form",
+    "sync-status",
     "login-status",
     "prev-month-btn",
     "next-month-btn",
@@ -248,6 +255,7 @@ function handleManageToggle() {
   }
   if (canEdit()) {
     state.currentUser = { role: "guest", memberId: null, name: "访客" };
+    state.adminSessionPassword = "";
     dom["admin-password"].value = "";
     toggleLoginPanel(false);
     refreshPermissionUI();
@@ -318,6 +326,7 @@ async function handleAdminLogin(event) {
     memberId: ADMIN_ACTOR_ID,
     name: "管理员"
   };
+  state.adminSessionPassword = password;
   dom["admin-password"].value = "";
   toggleLoginPanel(false);
   refreshPermissionUI();
@@ -364,8 +373,35 @@ function canEdit() {
   return state.currentUser.role === "admin";
 }
 
-async function loadDataFromLocal() {
+async function loadDataFromStorage() {
   const localDraft = loadLocalDraft();
+  const cloudEndpoint = getCloudEndpoint();
+  if (cloudEndpoint) {
+    try {
+      const response = await fetch(`${cloudEndpoint}?t=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const cloudData = normalizeData(await response.json());
+      if (localDraft) {
+        const draftTs = getDataTimestamp(localDraft);
+        const cloudTs = getDataTimestamp(cloudData);
+        state.data = draftTs >= cloudTs ? localDraft : cloudData;
+      } else {
+        state.data = cloudData;
+      }
+      persistLocalDraft(true);
+      setSyncStatus("已读取云端数据", false);
+      return;
+    } catch (error) {
+      if (localDraft) {
+        state.data = localDraft;
+        setSyncStatus(`云端读取失败，已使用本地草稿：${error.message}`, true);
+        return;
+      }
+      setSyncStatus(`云端读取失败，将尝试本地文件：${error.message}`, true);
+    }
+  }
 
   const localPath = APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
   try {
@@ -377,21 +413,19 @@ async function loadDataFromLocal() {
     if (localDraft) {
       const draftTs = getDataTimestamp(localDraft);
       const fileTs = getDataTimestamp(localFileData);
-      if (draftTs >= fileTs) {
-        state.data = localDraft;
-      } else {
-        state.data = localFileData;
-      }
+      state.data = draftTs >= fileTs ? localDraft : localFileData;
     } else {
       state.data = localFileData;
     }
     persistLocalDraft(true);
+    setSyncStatus("已读取本地数据文件", false);
   } catch (error) {
     if (localDraft) {
       state.data = localDraft;
       return;
     }
     state.data = createEmptyData();
+    setSyncStatus("本地数据读取失败，已初始化空数据。", true);
   }
 }
 
@@ -474,6 +508,82 @@ function clearPendingPersistHandle() {
   draftPersistMode = null;
 }
 
+function getCloudEndpoint() {
+  return (APP_CONFIG.persistence.cloudApiBase || "").trim();
+}
+
+function queueCloudSync() {
+  if (!canEdit() || !APP_CONFIG.persistence.autoSyncOnChange) {
+    return;
+  }
+  const endpoint = getCloudEndpoint();
+  if (!endpoint) {
+    setSyncStatus("未配置云端接口，当前仅本地保存。", true);
+    return;
+  }
+  if (!state.adminSessionPassword) {
+    setSyncStatus("管理会话已失效，请重新进入管理模式。", true);
+    return;
+  }
+
+  if (cloudSyncInFlight) {
+    cloudSyncDirty = true;
+    return;
+  }
+
+  if (cloudSyncTimer) {
+    clearTimeout(cloudSyncTimer);
+  }
+
+  cloudSyncTimer = window.setTimeout(() => {
+    cloudSyncTimer = null;
+    void runCloudSync(endpoint);
+  }, APP_CONFIG.persistence.saveDebounceMs || 0);
+}
+
+async function runCloudSync(endpoint) {
+  if (cloudSyncInFlight) {
+    cloudSyncDirty = true;
+    return;
+  }
+  cloudSyncInFlight = true;
+  try {
+    await syncDataToCloud(endpoint, state.adminSessionPassword, state.data);
+    setSyncStatus("同步成功：已保存到云端。", false);
+  } catch (error) {
+    setSyncStatus(`同步失败：${error.message}`, true);
+  } finally {
+    cloudSyncInFlight = false;
+    if (cloudSyncDirty) {
+      cloudSyncDirty = false;
+      queueCloudSync();
+    }
+  }
+}
+
+async function syncDataToCloud(endpoint, adminPassword, data) {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Admin-Password": adminPassword
+    },
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) {
+    throw new Error(await extractApiError(response));
+  }
+}
+
+async function extractApiError(response) {
+  try {
+    const json = await response.json();
+    return json.message || `${response.status} ${response.statusText}`;
+  } catch (error) {
+    return `${response.status} ${response.statusText}`;
+  }
+}
+
 async function handleEventSubmit(event) {
   event.preventDefault();
   if (!canEdit()) {
@@ -541,6 +651,7 @@ async function handleEventSubmit(event) {
   state.data.events.push(item);
   addLog(`${formatCNDate(date)}，新增一次${EVENT_TYPE_META[type].label}。`);
   persistLocalDraft(true);
+  queueCloudSync();
   renderCalendar();
   renderSelectedDateEvents();
   renderLogList();
@@ -582,6 +693,7 @@ async function handleHonorSubmit(event) {
   });
   addLog(`${formatCNDate(date)}，新增一条全场最佳。`);
   persistLocalDraft(true);
+  queueCloudSync();
   renderHonorList();
   renderLogList();
   dom["honor-form"].reset();
@@ -621,6 +733,7 @@ async function handlePetSubmit(event) {
   });
   addLog(`${formatCNDate(new Date())}，新增一条灵宠记录。`);
   persistLocalDraft(true);
+  queueCloudSync();
   renderPetList();
   renderLogList();
   dom["pet-form"].reset();
@@ -1054,6 +1167,7 @@ async function removeById(collectionName, id, logText) {
   state.data[collectionName] = next;
   addLog(logText);
   persistLocalDraft(true);
+  queueCloudSync();
   if (collectionName === "events") {
     renderCalendar();
     renderSelectedDateEvents();
@@ -1118,6 +1232,14 @@ function toMemberNames(memberIds = []) {
   return memberIds.map((id) => getMember(id).name);
 }
 
+function setSyncStatus(message, isError) {
+  const status = dom["sync-status"];
+  if (!status) {
+    return;
+  }
+  status.textContent = `同步状态：${message}`;
+  status.style.borderColor = isError ? "rgba(207, 63, 69, 0.35)" : "rgba(92, 107, 255, 0.28)";
+}
 
 function makeId(prefix) {
   if (window.crypto && typeof window.crypto.randomUUID === "function") {
