@@ -89,6 +89,7 @@ function cacheDom() {
     "manage-toggle-btn",
     "login-panel",
     "admin-password",
+    "admin-token",
     "admin-login-form",
     "sync-status",
     "login-status",
@@ -339,6 +340,9 @@ async function handleAdminLogin(event) {
   };
   state.adminSessionPassword = password;
   dom["admin-password"].value = "";
+  if (dom["admin-token"]) {
+    dom["admin-token"].value = "";
+  }
   toggleLoginPanel(false);
   refreshPermissionUI();
   setLoginStatus();
@@ -385,14 +389,14 @@ function canEdit() {
 }
 
 function ensureGithubToken() {
+  const inputToken = dom["admin-token"] ? dom["admin-token"].value.trim() : "";
+  if (inputToken) {
+    localStorage.setItem(STORAGE_KEYS.githubToken, inputToken);
+    return inputToken;
+  }
   const stored = localStorage.getItem(STORAGE_KEYS.githubToken) || "";
   if (stored) {
     return stored;
-  }
-  const token = window.prompt("请输入 GitHub Token（仅保存在本机，不会上传到仓库）：");
-  if (token && token.trim()) {
-    localStorage.setItem(STORAGE_KEYS.githubToken, token.trim());
-    return token.trim();
   }
   setSyncStatus("未配置 GitHub Token，无法同步到 GitHub。", true);
   return "";
