@@ -542,8 +542,10 @@ async function runGithubSync(token) {
   try {
     await syncDataToGithub(token, state.data);
     setSyncStatus("同步成功：已保存到 GitHub。", false);
+    addLog("GitHub 同步成功。");
   } catch (error) {
     setSyncStatus(`同步失败：${error.message}`, true);
+    addLog(`GitHub 同步失败：${error.message}`);
   } finally {
     githubSyncInFlight = false;
     if (githubSyncDirty) {
@@ -565,8 +567,10 @@ async function handleSyncNow() {
     setSyncStatus("正在提交到 GitHub...", false);
     await syncDataToGithub(token, state.data);
     setSyncStatus("同步成功：已保存到 GitHub。", false);
+    addLog("GitHub 手动同步成功。");
   } catch (error) {
     setSyncStatus(`同步失败：${error.message}`, true);
+    addLog(`GitHub 手动同步失败：${error.message}`);
   }
 }
 
