@@ -4,10 +4,15 @@ const APP_CONFIG = {
   siteTagline: "这是一个减肥群",
   tickerText: "李柏辰是GAY",
   adminPassword: "2026",
+  github: {
+    owner: "huangjialinn",
+    repo: "mad.github.io",
+    branch: "main",
+    dataPath: "data/mad-data.json"
+  },
   persistence: {
     autoSyncOnChange: true,
-    saveDebounceMs: 0,
-    cloudApiBase: "",
+    saveDebounceMs: 1200,
     localDataPath: "data/mad-data.json"
   },
   upload: {
@@ -29,7 +34,8 @@ const APP_CONFIG = {
 };
 
 const STORAGE_KEYS = {
-  draft: "mad_local_draft_v1"
+  draft: "mad_local_draft_v1",
+  githubToken: "mad_github_token_v1"
 };
 
 const EVENT_TYPE_META = {
@@ -55,9 +61,9 @@ const dom = {};
 let draftPersistHandle = null;
 let draftPersistMode = null;
 let pendingDraftText = "";
-let cloudSyncTimer = null;
-let cloudSyncInFlight = false;
-let cloudSyncDirty = false;
+let githubSyncTimer = null;
+let githubSyncInFlight = false;
+let githubSyncDirty = false;
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -86,6 +92,7 @@ function cacheDom() {
     "admin-login-form",
     "sync-status",
     "login-status",
+    "sync-now-btn",
     "prev-month-btn",
     "next-month-btn",
     "calendar-title",
@@ -208,6 +215,7 @@ function populateMemberControls() {
 
 function bindEvents() {
   addDomListener("admin-login-form", "submit", handleAdminLogin);
+  addDomListener("sync-now-btn", "click", handleSyncNow);
   addDomListener("manage-toggle-btn", "click", handleManageToggle);
   // Mobile fallback: some browsers may miss click when layered effects are present.
   addDomListener("manage-toggle-btn", "touchend", (event) => {
@@ -260,6 +268,7 @@ function handleManageToggle() {
     toggleLoginPanel(false);
     refreshPermissionUI();
     setLoginStatus();
+    setSyncStatus("未登录管理模式。", false);
     return;
   }
 
@@ -321,6 +330,8 @@ async function handleAdminLogin(event) {
     return;
   }
 
+  ensureGithubToken();
+
   state.currentUser = {
     role: "admin",
     memberId: ADMIN_ACTOR_ID,
@@ -373,36 +384,22 @@ function canEdit() {
   return state.currentUser.role === "admin";
 }
 
+function ensureGithubToken() {
+  const stored = localStorage.getItem(STORAGE_KEYS.githubToken) || "";
+  if (stored) {
+    return stored;
+  }
+  const token = window.prompt("请输入 GitHub Token（仅保存在本机，不会上传到仓库）：");
+  if (token && token.trim()) {
+    localStorage.setItem(STORAGE_KEYS.githubToken, token.trim());
+    return token.trim();
+  }
+  setSyncStatus("未配置 GitHub Token，无法同步到 GitHub。", true);
+  return "";
+}
+
 async function loadDataFromStorage() {
   const localDraft = loadLocalDraft();
-  const cloudEndpoint = getCloudEndpoint();
-  if (cloudEndpoint) {
-    try {
-      const response = await fetch(`${cloudEndpoint}?t=${Date.now()}`, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const cloudData = normalizeData(await response.json());
-      if (localDraft) {
-        const draftTs = getDataTimestamp(localDraft);
-        const cloudTs = getDataTimestamp(cloudData);
-        state.data = draftTs >= cloudTs ? localDraft : cloudData;
-      } else {
-        state.data = cloudData;
-      }
-      persistLocalDraft(true);
-      setSyncStatus("已读取云端数据", false);
-      return;
-    } catch (error) {
-      if (localDraft) {
-        state.data = localDraft;
-        setSyncStatus(`云端读取失败，已使用本地草稿：${error.message}`, true);
-        return;
-      }
-      setSyncStatus(`云端读取失败，将尝试本地文件：${error.message}`, true);
-    }
-  }
-
   const localPath = APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
   try {
     const response = await fetch(`${localPath}?t=${Date.now()}`, { cache: "no-store" });
@@ -508,80 +505,132 @@ function clearPendingPersistHandle() {
   draftPersistMode = null;
 }
 
-function getCloudEndpoint() {
-  return (APP_CONFIG.persistence.cloudApiBase || "").trim();
-}
-
-function queueCloudSync() {
+function queueGithubSync() {
   if (!canEdit() || !APP_CONFIG.persistence.autoSyncOnChange) {
     return;
   }
-  const endpoint = getCloudEndpoint();
-  if (!endpoint) {
-    setSyncStatus("未配置云端接口，当前仅本地保存。", true);
-    return;
-  }
-  if (!state.adminSessionPassword) {
-    setSyncStatus("管理会话已失效，请重新进入管理模式。", true);
+  const token = ensureGithubToken();
+  if (!token) {
     return;
   }
 
-  if (cloudSyncInFlight) {
-    cloudSyncDirty = true;
+  if (githubSyncInFlight) {
+    githubSyncDirty = true;
     return;
   }
 
-  if (cloudSyncTimer) {
-    clearTimeout(cloudSyncTimer);
+  if (githubSyncTimer) {
+    clearTimeout(githubSyncTimer);
   }
 
-  cloudSyncTimer = window.setTimeout(() => {
-    cloudSyncTimer = null;
-    void runCloudSync(endpoint);
-  }, APP_CONFIG.persistence.saveDebounceMs || 0);
+  githubSyncTimer = window.setTimeout(() => {
+    githubSyncTimer = null;
+    void runGithubSync(token);
+  }, APP_CONFIG.persistence.saveDebounceMs || 1200);
 }
 
-async function runCloudSync(endpoint) {
-  if (cloudSyncInFlight) {
-    cloudSyncDirty = true;
+async function runGithubSync(token) {
+  if (githubSyncInFlight) {
+    githubSyncDirty = true;
     return;
   }
-  cloudSyncInFlight = true;
+  githubSyncInFlight = true;
   try {
-    await syncDataToCloud(endpoint, state.adminSessionPassword, state.data);
-    setSyncStatus("同步成功：已保存到云端。", false);
+    await syncDataToGithub(token, state.data);
+    setSyncStatus("同步成功：已保存到 GitHub。", false);
   } catch (error) {
     setSyncStatus(`同步失败：${error.message}`, true);
   } finally {
-    cloudSyncInFlight = false;
-    if (cloudSyncDirty) {
-      cloudSyncDirty = false;
-      queueCloudSync();
+    githubSyncInFlight = false;
+    if (githubSyncDirty) {
+      githubSyncDirty = false;
+      queueGithubSync();
     }
   }
 }
 
-async function syncDataToCloud(endpoint, adminPassword, data) {
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Admin-Password": adminPassword
-    },
-    body: JSON.stringify(data)
-  });
-  if (!response.ok) {
-    throw new Error(await extractApiError(response));
+async function handleSyncNow() {
+  if (!canEdit()) {
+    return;
+  }
+  const token = ensureGithubToken();
+  if (!token) {
+    return;
+  }
+  try {
+    setSyncStatus("正在提交到 GitHub...", false);
+    await syncDataToGithub(token, state.data);
+    setSyncStatus("同步成功：已保存到 GitHub。", false);
+  } catch (error) {
+    setSyncStatus(`同步失败：${error.message}`, true);
   }
 }
 
-async function extractApiError(response) {
+async function syncDataToGithub(token, data) {
+  const endpoint = buildContentsApiUrl(APP_CONFIG.github);
+  const headers = {
+    Accept: "application/vnd.github+json",
+    Authorization: `Bearer ${token}`,
+    "X-GitHub-Api-Version": "2022-11-28"
+  };
+
+  let sha;
+  const checkResponse = await fetch(`${endpoint}?ref=${encodeURIComponent(APP_CONFIG.github.branch)}`, {
+    method: "GET",
+    headers
+  });
+  if (checkResponse.ok) {
+    const info = await checkResponse.json();
+    sha = info.sha;
+  } else if (checkResponse.status !== 404) {
+    throw new Error(await extractGithubError(checkResponse));
+  }
+
+  const content = utf8ToBase64(JSON.stringify(data, null, 2));
+  const payload = {
+    message: `chore: update MAD data ${new Date().toISOString()}`,
+    content,
+    branch: APP_CONFIG.github.branch
+  };
+  if (sha) {
+    payload.sha = sha;
+  }
+
+  const putResponse = await fetch(endpoint, {
+    method: "PUT",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!putResponse.ok) {
+    throw new Error(await extractGithubError(putResponse));
+  }
+}
+
+function buildContentsApiUrl(config) {
+  const encodedPath = config.dataPath
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+  return `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${encodedPath}`;
+}
+
+async function extractGithubError(response) {
   try {
     const json = await response.json();
     return json.message || `${response.status} ${response.statusText}`;
   } catch (error) {
     return `${response.status} ${response.statusText}`;
   }
+}
+
+function utf8ToBase64(text) {
+  const bytes = new TextEncoder().encode(text);
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
 }
 
 async function handleEventSubmit(event) {
@@ -651,7 +700,7 @@ async function handleEventSubmit(event) {
   state.data.events.push(item);
   addLog(`${formatCNDate(date)}，新增一次${EVENT_TYPE_META[type].label}。`);
   persistLocalDraft(true);
-  queueCloudSync();
+  queueGithubSync();
   renderCalendar();
   renderSelectedDateEvents();
   renderLogList();
@@ -693,7 +742,7 @@ async function handleHonorSubmit(event) {
   });
   addLog(`${formatCNDate(date)}，新增一条全场最佳。`);
   persistLocalDraft(true);
-  queueCloudSync();
+  queueGithubSync();
   renderHonorList();
   renderLogList();
   dom["honor-form"].reset();
@@ -733,7 +782,7 @@ async function handlePetSubmit(event) {
   });
   addLog(`${formatCNDate(new Date())}，新增一条灵宠记录。`);
   persistLocalDraft(true);
-  queueCloudSync();
+  queueGithubSync();
   renderPetList();
   renderLogList();
   dom["pet-form"].reset();
@@ -1167,7 +1216,7 @@ async function removeById(collectionName, id, logText) {
   state.data[collectionName] = next;
   addLog(logText);
   persistLocalDraft(true);
-  queueCloudSync();
+  queueGithubSync();
   if (collectionName === "events") {
     renderCalendar();
     renderSelectedDateEvents();
