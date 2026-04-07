@@ -1,7 +1,0 @@
-name = "mad-data-worker"
-main = "worker.js"
-compatibility_date = "2026-04-03"
-
-[[kv_namespaces]]
-binding = "MAD_DATA_KV"
-id = "c22ad03c658344059fd2b6eb64b9a3b9"
