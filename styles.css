@@ -498,6 +498,12 @@ input[type="file"] {
   border-radius: 12px;
 }
 
+select.member-color {
+  height: var(--control-h);
+  border-radius: 12px;
+  background: rgba(10, 14, 22, 0.9);
+}
+
 input:focus,
 select:focus,
 textarea:focus {
@@ -876,7 +882,7 @@ button:disabled {
 
 .member-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 180px) auto;
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--line);
@@ -902,7 +908,7 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--line);
+  border: 2px solid var(--avatar-color, var(--line-strong));
   border-radius: 12px;
   background: rgba(7, 12, 24, 0.9);
   background-size: cover;
@@ -911,6 +917,8 @@ button:disabled {
   font-size: 0.78rem;
   text-align: center;
   padding: 6px;
+  box-shadow: 0 0 0 3px rgba(18, 24, 42, 0.7);
+  animation: avatar-breathe 3.8s ease-in-out infinite;
 }
 
 .member-avatar-preview.is-empty {
@@ -977,11 +985,13 @@ button:disabled {
   height: 38px;
   border-radius: 999px;
   padding: 2px;
-  background: linear-gradient(140deg, rgba(135, 156, 255, 0.88), rgba(39, 210, 255, 0.6));
-  box-shadow: 0 0 0 1px rgba(165, 186, 255, 0.28), 0 8px 16px rgba(28, 43, 88, 0.45);
+  background:
+    linear-gradient(140deg, color-mix(in srgb, var(--avatar-color, #8aa2ff) 70%, transparent), rgba(39, 210, 255, 0.6));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--avatar-color, #8aa2ff) 55%, transparent), 0 8px 16px rgba(28, 43, 88, 0.45);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  animation: avatar-breathe 3.8s ease-in-out infinite;
 }
 
 .avatar {
@@ -1210,6 +1220,21 @@ code {
   100% {
     filter: drop-shadow(0 0 0 rgba(255, 211, 120, 0));
     opacity: 0.85;
+  }
+}
+
+@keyframes avatar-breathe {
+  0% {
+    filter: drop-shadow(0 0 0 rgba(122, 162, 255, 0));
+    transform: translateY(0);
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(122, 162, 255, 0.45));
+    transform: translateY(-1px);
+  }
+  100% {
+    filter: drop-shadow(0 0 0 rgba(122, 162, 255, 0));
+    transform: translateY(0);
   }
 }
 

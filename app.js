@@ -22,14 +22,14 @@ const APP_CONFIG = {
     jpegQuality: 0.82
   },
   members: [
-    { id: "m1", name: "YG", avatar: "" },
-    { id: "m2", name: "P1", avatar: "" },
-    { id: "m3", name: "烟", avatar: "" },
-    { id: "m4", name: "轩", avatar: "" },
-    { id: "m5", name: "陶", avatar: "" },
-    { id: "m6", name: "柏", avatar: "" },
-    { id: "m7", name: "姜", avatar: "" },
-    { id: "m8", name: "叶", avatar: "" }
+    { id: "m1", name: "YG", avatar: "", color: "#7A6CFF" },
+    { id: "m2", name: "P1", avatar: "", color: "#5CC8FF" },
+    { id: "m3", name: "烟", avatar: "", color: "#5EEAD4" },
+    { id: "m4", name: "轩", avatar: "", color: "#34D399" },
+    { id: "m5", name: "陶", avatar: "", color: "#F59E0B" },
+    { id: "m6", name: "柏", avatar: "", color: "#FB7185" },
+    { id: "m7", name: "姜", avatar: "", color: "#F472B6" },
+    { id: "m8", name: "叶", avatar: "", color: "#A78BFA" }
   ],
 };
 
@@ -46,7 +46,19 @@ const EVENT_TYPE_META = {
 };
 
 let MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
-const UNKNOWN_MEMBER = { id: "unknown", name: "未知成员", avatar: "" };
+const UNKNOWN_MEMBER = { id: "unknown", name: "未知成员", avatar: "", color: "#94A3B8" };
+const AVATAR_COLOR_PALETTE = [
+  "#7A6CFF",
+  "#5CC8FF",
+  "#5EEAD4",
+  "#34D399",
+  "#F59E0B",
+  "#FB7185",
+  "#F472B6",
+  "#A78BFA",
+  "#60A5FA",
+  "#F97316"
+];
 const EMPTY_COUNTER = Object.freeze({ drink: 0, meal: 0, sport: 0 });
 const ADMIN_ACTOR_ID = "admin";
 
@@ -247,6 +259,9 @@ function populateMemberControls() {
 
     const text = document.createElement("span");
     text.textContent = member.name;
+    if (member.color) {
+      text.style.setProperty("--avatar-color", member.color);
+    }
 
     chip.appendChild(checkbox);
     chip.appendChild(text);
@@ -288,6 +303,7 @@ function createMemberEditorRow(member) {
   row.className = "member-row";
   row.dataset.id = member.id;
   row.dataset.avatar = member.avatar || "";
+  row.dataset.color = member.color || "";
 
   const nameLabel = document.createElement("label");
   nameLabel.textContent = "姓名";
@@ -296,6 +312,20 @@ function createMemberEditorRow(member) {
   nameInput.value = member.name || "";
   nameInput.className = "member-name";
   nameLabel.appendChild(nameInput);
+
+  const colorLabel = document.createElement("label");
+  colorLabel.textContent = "头像框颜色";
+  const colorSelect = document.createElement("select");
+  colorSelect.className = "member-color";
+  AVATAR_COLOR_PALETTE.forEach((color, idx) => {
+    const option = document.createElement("option");
+    option.value = color;
+    option.textContent = `颜色 ${idx + 1}`;
+    option.style.color = color;
+    colorSelect.appendChild(option);
+  });
+  colorSelect.value = member.color || AVATAR_COLOR_PALETTE[0];
+  colorLabel.appendChild(colorSelect);
 
   const uploadLabel = document.createElement("label");
   uploadLabel.textContent = "添加头像";
@@ -322,9 +352,16 @@ function createMemberEditorRow(member) {
   const preview = document.createElement("div");
   preview.className = "member-avatar-preview";
   updateMemberPreviewElement(preview, member.avatar || "");
+  updateMemberPreviewColor(preview, member.color || "");
+
+  colorSelect.addEventListener("change", () => {
+    row.dataset.color = colorSelect.value;
+    updateMemberPreviewColor(preview, colorSelect.value);
+  });
 
   row.appendChild(nameLabel);
   row.appendChild(preview);
+  row.appendChild(colorLabel);
   row.appendChild(uploadLabel);
   return row;
 }
@@ -335,6 +372,13 @@ function updateMemberPreview(row, src) {
     return;
   }
   updateMemberPreviewElement(preview, src);
+}
+
+function updateMemberPreviewColor(preview, color) {
+  if (!preview) {
+    return;
+  }
+  preview.style.setProperty("--avatar-color", color || "#94A3B8");
 }
 
 function updateMemberPreviewElement(preview, src) {
@@ -356,7 +400,8 @@ function handleAddMember() {
   const next = {
     id: makeId("member"),
     name: "新成员",
-    avatar: ""
+    avatar: "",
+    color: AVATAR_COLOR_PALETTE[Math.floor(Math.random() * AVATAR_COLOR_PALETTE.length)]
   };
   APP_CONFIG.members.push(next);
   setMembers(APP_CONFIG.members);
@@ -387,7 +432,8 @@ function handleSaveSettings() {
       const id = row.dataset.id || makeId("member");
       const name = row.querySelector(".member-name")?.value.trim() || "成员";
       const avatar = row.dataset.avatar || "";
-      nextMembers.push({ id, name, avatar });
+      const color = row.dataset.color || AVATAR_COLOR_PALETTE[0];
+      nextMembers.push({ id, name, avatar, color });
     });
   }
 
@@ -1438,6 +1484,9 @@ function renderMonthlyAwards(year, month) {
         person.className = "award-person";
         const avatarShell = document.createElement("span");
         avatarShell.className = "avatar-shell";
+        if (member.color) {
+          avatarShell.style.setProperty("--avatar-color", member.color);
+        }
         if (member.avatar) {
           const avatar = document.createElement("img");
           avatar.className = "avatar";
@@ -1658,6 +1707,9 @@ function makeEntryHead(title, extra, onDelete, member) {
     person.className = "person";
     const avatarShell = document.createElement("span");
     avatarShell.className = "avatar-shell";
+    if (member.color) {
+      avatarShell.style.setProperty("--avatar-color", member.color);
+    }
     if (member.avatar) {
       const avatar = document.createElement("img");
       avatar.className = "avatar";
