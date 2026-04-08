@@ -48,6 +48,7 @@ body {
   position: fixed;
   inset: -8%;
   z-index: -4;
+  will-change: transform;
   background:
     linear-gradient(180deg, #000000, #000000);
   opacity: 1;
@@ -60,6 +61,7 @@ body {
   position: fixed;
   inset: -12%;
   z-index: -3;
+  will-change: transform;
   background-image:
     radial-gradient(1.5px 1.5px at 10% 20%, rgba(255, 255, 255, 0.6), transparent),
     radial-gradient(1px 1px at 35% 75%, rgba(210, 228, 255, 0.5), transparent),
@@ -75,6 +77,7 @@ body {
   position: fixed;
   inset: -16%;
   z-index: -3;
+  will-change: transform;
   background-image:
     radial-gradient(1px 1px at 12% 12%, rgba(210, 230, 255, 0.45), transparent),
     radial-gradient(0.9px 0.9px at 42% 22%, rgba(220, 238, 255, 0.4), transparent),
@@ -91,6 +94,7 @@ body {
   position: fixed;
   inset: -10%;
   z-index: -2;
+  will-change: transform;
   background-image:
     linear-gradient(120deg, transparent 18%, rgba(120, 155, 255, 0.12) 32%, transparent 52%),
     linear-gradient(200deg, transparent 28%, rgba(80, 210, 255, 0.12) 44%, transparent 60%);
@@ -130,7 +134,7 @@ body {
 
 .page {
   width: min(1220px, 94vw);
-  margin: 20px auto 58px;
+  margin: 22px auto 60px;
   padding-inline: 4px;
   position: relative;
   z-index: 1;
@@ -202,7 +206,7 @@ body {
 }
 
 .hero {
-  padding: 18px 4px 6px;
+  padding: 20px 4px 8px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -270,7 +274,7 @@ h1 {
 }
 
 h2 {
-  margin: 0 0 14px;
+  margin: 0 0 12px;
   font-size: 1.08rem;
   letter-spacing: 0.01em;
 }
@@ -300,13 +304,13 @@ h3 {
 }
 
 .card {
-  margin-top: 16px;
+  margin-top: 18px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background:
     linear-gradient(180deg, rgba(13, 20, 36, 0.9), rgba(10, 16, 30, 0.92));
   box-shadow: var(--shadow);
-  padding: 20px;
+  padding: 22px;
   animation: fade-up 480ms ease-out both;
   backdrop-filter: blur(6px);
   position: relative;
@@ -350,9 +354,9 @@ h3 {
 .layout {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 20px;
   align-items: start;
-  margin-top: 20px;
+  margin-top: 22px;
 }
 
 .layout .card {
@@ -379,7 +383,7 @@ h3 {
 .login-grid,
 .github-grid {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .login-grid {
@@ -395,8 +399,8 @@ h3 {
 
 #admin-login-form {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) auto;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
   align-items: end;
 }
 
@@ -521,7 +525,7 @@ button:disabled {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 
 .chips {
@@ -651,6 +655,8 @@ button:disabled {
   border-radius: 14px;
   background: rgba(10, 16, 30, 0.9);
   padding: 12px;
+  content-visibility: auto;
+  contain-intrinsic-size: 120px;
 }
 
 .entry-head {

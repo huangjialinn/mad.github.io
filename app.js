@@ -615,10 +615,10 @@ async function loadDataFromStorage() {
     if (localDraft) {
       const draftTs = getDataTimestamp(localDraft);
       const fileTs = getDataTimestamp(localFileData);
-      const preferDraft = draftTs >= fileTs;
-      const base = preferDraft ? localDraft : localFileData;
-      const fallback = preferDraft ? localFileData : localDraft;
-      state.data = mergeData(base, fallback);
+      const useDraft = draftTs >= fileTs;
+      state.data = normalizeData(useDraft ? localDraft : localFileData);
+      state.data.settings = localFileData.settings;
+      state.data.members = localFileData.members;
     } else {
       state.data = localFileData;
     }
