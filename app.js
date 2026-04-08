@@ -506,6 +506,60 @@ function initStackedTabs() {
         update();
       }
     });
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isSwiping = false;
+
+    dom["stacked-panels"].addEventListener(
+      "touchstart",
+      (event) => {
+        const touch = event.touches[0];
+        if (!touch) {
+          return;
+        }
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        isSwiping = false;
+      },
+      { passive: true }
+    );
+
+    dom["stacked-panels"].addEventListener(
+      "touchmove",
+      (event) => {
+        const touch = event.touches[0];
+        if (!touch) {
+          return;
+        }
+        const dx = touch.clientX - touchStartX;
+        const dy = touch.clientY - touchStartY;
+        if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy)) {
+          isSwiping = true;
+        }
+      },
+      { passive: true }
+    );
+
+    dom["stacked-panels"].addEventListener("touchend", (event) => {
+      if (!isSwiping) {
+        return;
+      }
+      const touch = event.changedTouches[0];
+      if (!touch) {
+        return;
+      }
+      const dx = touch.clientX - touchStartX;
+      if (Math.abs(dx) < 40) {
+        return;
+      }
+      if (dx > 0) {
+        activeIndex = (activeIndex - 1 + panels.length) % panels.length;
+      } else {
+        activeIndex = (activeIndex + 1) % panels.length;
+      }
+      update();
+    });
   }
 }
 

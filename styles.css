@@ -383,10 +383,13 @@ h3 {
   min-height: 520px;
   overflow: visible;
   perspective: 1200px;
+  padding-inline: 6%;
 }
 
 .stacked-panel {
   grid-area: 1 / 1;
+  width: 88%;
+  justify-self: center;
   opacity: 0;
   transform: translateX(0) scale(0.98);
   transition:
@@ -415,12 +418,12 @@ h3 {
 }
 
 .stacked-panel.is-prev {
-  transform: translateX(-62%) scale(0.96);
+  transform: translateX(-58%) scale(0.96);
   z-index: 2;
 }
 
 .stacked-panel.is-next {
-  transform: translateX(62%) scale(0.96);
+  transform: translateX(58%) scale(0.96);
   z-index: 2;
 }
 
@@ -442,11 +445,11 @@ h3 {
 .stacked-panel.is-prev:hover,
 .stacked-panel.is-next:hover {
   opacity: 0.75;
-  transform: translateX(-60%) scale(0.97);
+  transform: translateX(-56%) scale(0.97);
 }
 
 .stacked-panel.is-next:hover {
-  transform: translateX(60%) scale(0.97);
+  transform: translateX(56%) scale(0.97);
 }
 
 .span-2 {
@@ -1094,19 +1097,19 @@ code {
   }
 
   .stacked-panel.is-prev {
-    transform: translateX(-48%) scale(0.97);
+    transform: translateX(-44%) scale(0.97);
   }
 
   .stacked-panel.is-next {
-    transform: translateX(48%) scale(0.97);
+    transform: translateX(44%) scale(0.97);
   }
 
   .stacked-panel.is-prev:hover {
-    transform: translateX(-46%) scale(0.98);
+    transform: translateX(-42%) scale(0.98);
   }
 
   .stacked-panel.is-next:hover {
-    transform: translateX(46%) scale(0.98);
+    transform: translateX(42%) scale(0.98);
   }
 }
 
@@ -1147,22 +1150,23 @@ code {
 
   .stacked-panels {
     min-height: 460px;
+    padding-inline: 4%;
   }
 
   .stacked-panel.is-prev {
-    transform: translateX(-34%) scale(0.98);
+    transform: translateX(-30%) scale(0.98);
   }
 
   .stacked-panel.is-next {
-    transform: translateX(34%) scale(0.98);
+    transform: translateX(30%) scale(0.98);
   }
 
   .stacked-panel.is-prev:hover {
-    transform: translateX(-32%) scale(0.99);
+    transform: translateX(-28%) scale(0.99);
   }
 
   .stacked-panel.is-next:hover {
-    transform: translateX(32%) scale(0.99);
+    transform: translateX(28%) scale(0.99);
   }
 
 }
