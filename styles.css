@@ -371,6 +371,84 @@ h3 {
   margin-top: 0;
 }
 
+.stacked {
+  margin-top: 22px;
+  position: relative;
+}
+
+.stacked-panels {
+  position: relative;
+  display: grid;
+  align-items: stretch;
+  min-height: 520px;
+  overflow: visible;
+  perspective: 1200px;
+}
+
+.stacked-panel {
+  grid-area: 1 / 1;
+  opacity: 0;
+  transform: translateX(0) scale(0.98);
+  transition:
+    transform 320ms ease,
+    opacity 240ms ease,
+    box-shadow 320ms ease,
+    filter 320ms ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.stacked-panel.is-active {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  pointer-events: auto;
+  z-index: 3;
+}
+
+.stacked-panel.is-prev,
+.stacked-panel.is-next {
+  opacity: 0.58;
+  filter: saturate(0.9);
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 18px 46px rgba(3, 8, 20, 0.45);
+}
+
+.stacked-panel.is-prev {
+  transform: translateX(-62%) scale(0.96);
+  z-index: 2;
+}
+
+.stacked-panel.is-next {
+  transform: translateX(62%) scale(0.96);
+  z-index: 2;
+}
+
+.stacked-panel.is-prev::after,
+.stacked-panel.is-next::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(110deg, rgba(7, 12, 24, 0.65), rgba(10, 18, 36, 0.2));
+  opacity: 0.65;
+}
+
+.stacked-panel.is-next::after {
+  background: linear-gradient(250deg, rgba(7, 12, 24, 0.65), rgba(10, 18, 36, 0.2));
+}
+
+.stacked-panel.is-prev:hover,
+.stacked-panel.is-next:hover {
+  opacity: 0.75;
+  transform: translateX(-60%) scale(0.97);
+}
+
+.stacked-panel.is-next:hover {
+  transform: translateX(60%) scale(0.97);
+}
+
 .span-2 {
   grid-column: span 2;
 }
@@ -1014,6 +1092,22 @@ code {
   .span-2 {
     grid-column: span 2;
   }
+
+  .stacked-panel.is-prev {
+    transform: translateX(-48%) scale(0.97);
+  }
+
+  .stacked-panel.is-next {
+    transform: translateX(48%) scale(0.97);
+  }
+
+  .stacked-panel.is-prev:hover {
+    transform: translateX(-46%) scale(0.98);
+  }
+
+  .stacked-panel.is-next:hover {
+    transform: translateX(46%) scale(0.98);
+  }
 }
 
 @media (max-width: 760px) {
@@ -1049,6 +1143,26 @@ code {
 
   .top-ticker-track {
     animation-duration: 12s;
+  }
+
+  .stacked-panels {
+    min-height: 460px;
+  }
+
+  .stacked-panel.is-prev {
+    transform: translateX(-34%) scale(0.98);
+  }
+
+  .stacked-panel.is-next {
+    transform: translateX(34%) scale(0.98);
+  }
+
+  .stacked-panel.is-prev:hover {
+    transform: translateX(-32%) scale(0.99);
+  }
+
+  .stacked-panel.is-next:hover {
+    transform: translateX(32%) scale(0.99);
   }
 
 }

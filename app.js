@@ -141,8 +141,7 @@ function cacheDom() {
     "pet-list",
     "log-list"
     ,
-    "tab-prev-btn",
-    "tab-next-btn"
+    "stacked-panels"
   ];
   ids.forEach((id) => {
     dom[id] = document.getElementById(id);
@@ -463,38 +462,50 @@ function addDomListener(id, eventName, handler) {
 }
 
 function initStackedTabs() {
-  const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
-  if (!tabButtons.length) {
+  const panels = Array.from(document.querySelectorAll(".stacked-panel"));
+  if (!panels.length) {
     return;
   }
-  const panels = Array.from(document.querySelectorAll(".stacked-panel"));
+  let activeIndex = Math.max(0, panels.findIndex((panel) => panel.classList.contains("is-active")));
+  if (activeIndex < 0) {
+    activeIndex = 0;
+    panels[0].classList.add("is-active");
+  }
 
-  const setActive = (nextId) => {
-    tabButtons.forEach((btn) => {
-      const active = btn.dataset.tab === nextId;
-      btn.classList.toggle("is-active", active);
-      btn.setAttribute("aria-selected", active ? "true" : "false");
-    });
-    panels.forEach((panel) => {
-      panel.classList.toggle("is-active", panel.dataset.panel === nextId);
+  const update = () => {
+    panels.forEach((panel, idx) => {
+      panel.classList.toggle("is-active", idx === activeIndex);
+      panel.classList.toggle("is-prev", idx === (activeIndex - 1 + panels.length) % panels.length);
+      panel.classList.toggle("is-next", idx === (activeIndex + 1) % panels.length);
     });
   };
 
-  tabButtons.forEach((btn) => {
-    btn.addEventListener("click", () => setActive(btn.dataset.tab));
+  update();
+
+  panels.forEach((panel, idx) => {
+    panel.addEventListener("click", (event) => {
+      if (idx === activeIndex) {
+        return;
+      }
+      if (panel.classList.contains("is-prev")) {
+        activeIndex = (activeIndex - 1 + panels.length) % panels.length;
+        update();
+        event.preventDefault();
+      } else if (panel.classList.contains("is-next")) {
+        activeIndex = (activeIndex + 1) % panels.length;
+        update();
+        event.preventDefault();
+      }
+    });
   });
 
-  const rotate = (dir) => {
-    const activeIdx = tabButtons.findIndex((btn) => btn.classList.contains("is-active"));
-    const nextIdx = (activeIdx + dir + tabButtons.length) % tabButtons.length;
-    setActive(tabButtons[nextIdx].dataset.tab);
-  };
-
-  if (dom["tab-prev-btn"]) {
-    dom["tab-prev-btn"].addEventListener("click", () => rotate(-1));
-  }
-  if (dom["tab-next-btn"]) {
-    dom["tab-next-btn"].addEventListener("click", () => rotate(1));
+  if (dom["stacked-panels"]) {
+    dom["stacked-panels"].addEventListener("click", (event) => {
+      if (event.target === dom["stacked-panels"]) {
+        activeIndex = (activeIndex + 1) % panels.length;
+        update();
+      }
+    });
   }
 }
 
