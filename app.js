@@ -294,8 +294,8 @@ function createMemberEditorRow(member) {
   const avatarInput = document.createElement("input");
   avatarInput.type = "text";
   avatarInput.value = member.avatar || "";
-  avatarInput.placeholder = "./png/p1.png";
-  avatarInput.className = "member-avatar";
+  avatarInput.placeholder = "由上传自动生成";
+  avatarInput.className = "member-avatar hidden";
   avatarLabel.appendChild(avatarInput);
 
   const uploadLabel = document.createElement("label");
@@ -377,7 +377,7 @@ function handleSaveSettings() {
     dom["member-list"].querySelectorAll(".member-row").forEach((row) => {
       const id = row.dataset.id || makeId("member");
       const name = row.querySelector(".member-name")?.value.trim() || "成员";
-      const avatar = row.querySelector(".member-avatar")?.value.trim() || "./png/p1.png";
+      const avatar = row.querySelector(".member-avatar")?.value.trim() || "";
       nextMembers.push({ id, name, avatar });
     });
   }
