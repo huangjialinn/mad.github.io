@@ -466,101 +466,10 @@ function initStackedTabs() {
   if (!panels.length) {
     return;
   }
-  let activeIndex = Math.max(0, panels.findIndex((panel) => panel.classList.contains("is-active")));
-  if (activeIndex < 0) {
-    activeIndex = 0;
-    panels[0].classList.add("is-active");
-  }
-
-  const update = () => {
-    panels.forEach((panel, idx) => {
-      panel.classList.toggle("is-active", idx === activeIndex);
-      panel.classList.toggle("is-prev", idx === (activeIndex - 1 + panels.length) % panels.length);
-      panel.classList.toggle("is-next", idx === (activeIndex + 1) % panels.length);
-    });
-  };
-
-  update();
-
-  panels.forEach((panel, idx) => {
-    panel.addEventListener("click", (event) => {
-      if (idx === activeIndex) {
-        return;
-      }
-      if (panel.classList.contains("is-prev")) {
-        activeIndex = (activeIndex - 1 + panels.length) % panels.length;
-        update();
-        event.preventDefault();
-      } else if (panel.classList.contains("is-next")) {
-        activeIndex = (activeIndex + 1) % panels.length;
-        update();
-        event.preventDefault();
-      }
-    });
+  panels.forEach((panel) => {
+    panel.classList.remove("is-prev", "is-next");
+    panel.classList.add("is-active");
   });
-
-  if (dom["stacked-panels"]) {
-    dom["stacked-panels"].addEventListener("click", (event) => {
-      if (event.target === dom["stacked-panels"]) {
-        activeIndex = (activeIndex + 1) % panels.length;
-        update();
-      }
-    });
-
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let isSwiping = false;
-
-    dom["stacked-panels"].addEventListener(
-      "touchstart",
-      (event) => {
-        const touch = event.touches[0];
-        if (!touch) {
-          return;
-        }
-        touchStartX = touch.clientX;
-        touchStartY = touch.clientY;
-        isSwiping = false;
-      },
-      { passive: true }
-    );
-
-    dom["stacked-panels"].addEventListener(
-      "touchmove",
-      (event) => {
-        const touch = event.touches[0];
-        if (!touch) {
-          return;
-        }
-        const dx = touch.clientX - touchStartX;
-        const dy = touch.clientY - touchStartY;
-        if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy)) {
-          isSwiping = true;
-        }
-      },
-      { passive: true }
-    );
-
-    dom["stacked-panels"].addEventListener("touchend", (event) => {
-      if (!isSwiping) {
-        return;
-      }
-      const touch = event.changedTouches[0];
-      if (!touch) {
-        return;
-      }
-      const dx = touch.clientX - touchStartX;
-      if (Math.abs(dx) < 40) {
-        return;
-      }
-      if (dx > 0) {
-        activeIndex = (activeIndex - 1 + panels.length) % panels.length;
-      } else {
-        activeIndex = (activeIndex + 1) % panels.length;
-      }
-      update();
-    });
-  }
 }
 
 function handleManageToggle() {
