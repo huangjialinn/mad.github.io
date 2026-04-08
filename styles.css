@@ -613,8 +613,8 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--panel-strong);
-  padding: 9px;
-  min-height: 78px;
+  padding: 10px;
+  min-height: 96px;
 }
 
 .calendar-weekday {
