@@ -638,7 +638,8 @@ function ensureGithubToken() {
 async function loadDataFromStorage() {
   const localDraft = loadLocalDraft();
   const cachedData = loadCachedData();
-  const localPath = buildRawDataUrl(APP_CONFIG.github) || APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
+  const remotePath = buildRawDataUrl(APP_CONFIG.github) || APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
+  const fallbackPath = APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
   let seeded = false;
   if (localDraft) {
     state.data = normalizeData(localDraft);
@@ -651,36 +652,71 @@ async function loadDataFromStorage() {
   }
 
   if (seeded) {
-    refreshRemoteData(localPath, localDraft);
+    refreshRemoteData(remotePath, localDraft);
     return;
   }
 
+  let remoteResolved = false;
+  let fallbackUsed = false;
+  const fallbackTimer = window.setTimeout(async () => {
+    if (remoteResolved) {
+      return;
+    }
+    const fallbackData = await fetchRemoteData(fallbackPath, { cacheBust: true, timeoutNotice: false });
+    if (fallbackData) {
+      fallbackUsed = true;
+      state.data = normalizeData(fallbackData);
+      persistLocalDraft(true);
+      saveCachedData(fallbackData);
+      applyDataConfig();
+      renderAll();
+      setSyncStatus("远端读取较慢，已先打开本地数据。", false);
+    }
+  }, 1800);
+
   try {
-    const localFileData = await fetchRemoteData(localPath, { cacheBust: true });
-    if (!localFileData) {
+    const remoteData = await fetchRemoteData(remotePath, { cacheBust: true, timeoutNotice: true });
+    remoteResolved = true;
+    window.clearTimeout(fallbackTimer);
+    if (!remoteData) {
       throw new Error("empty");
+    }
+    if (fallbackUsed) {
+      const remoteTs = getDataTimestamp(remoteData);
+      const currentTs = getDataTimestamp(state.data);
+      if (remoteTs > currentTs) {
+        state.data = normalizeData(remoteData);
+        persistLocalDraft(true);
+        saveCachedData(remoteData);
+        applyDataConfig();
+        renderAll();
+        setSyncStatus("已更新到最新云端数据", false);
+      }
+      return;
     }
     if (localDraft) {
       const draftTs = getDataTimestamp(localDraft);
-      const fileTs = getDataTimestamp(localFileData);
+      const fileTs = getDataTimestamp(remoteData);
       const useDraft = draftTs >= fileTs;
-      state.data = normalizeData(useDraft ? localDraft : localFileData);
-      state.data.settings = localFileData.settings;
-      state.data.members = localFileData.members;
+      state.data = normalizeData(useDraft ? localDraft : remoteData);
+      state.data.settings = remoteData.settings;
+      state.data.members = remoteData.members;
     } else {
-      state.data = localFileData;
+      state.data = remoteData;
     }
     persistLocalDraft(true);
-    saveCachedData(localFileData);
-    setSyncStatus("已读取本地数据文件", false);
+    saveCachedData(remoteData);
+    setSyncStatus("已读取远端数据", false);
   } catch (error) {
+    remoteResolved = true;
+    window.clearTimeout(fallbackTimer);
     if (localDraft) {
       state.data = localDraft;
       saveCachedData(localDraft);
       return;
     }
     state.data = createEmptyData();
-    setSyncStatus("本地数据读取失败，已初始化空数据。", true);
+    setSyncStatus("远端读取失败，已初始化空数据。", true);
   }
 }
 
@@ -772,28 +808,31 @@ function flushPendingDraftSync() {
   }
 }
 
-async function fetchRemoteData(localPath, { cacheBust = false, timeoutMs = 4500 } = {}) {
-  const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+async function fetchRemoteData(localPath, { cacheBust = false, timeoutNotice = false } = {}) {
   const url = cacheBust ? `${localPath}?t=${Date.now()}` : localPath;
+  let timeoutHandle = null;
+  if (timeoutNotice) {
+    timeoutHandle = window.setTimeout(() => {
+      setSyncStatus("远端读取较慢，继续读取中...", false);
+    }, 2500);
+  }
   try {
-    const response = await fetch(url, { cache: "no-cache", signal: controller.signal });
+    const response = await fetch(url, { cache: "no-cache" });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
     return normalizeData(await response.json());
   } catch (error) {
-    if (error && error.name === "AbortError") {
-      setSyncStatus("远端读取超时，已使用缓存数据。", true);
-    }
     return null;
   } finally {
-    window.clearTimeout(timer);
+    if (timeoutHandle) {
+      window.clearTimeout(timeoutHandle);
+    }
   }
 }
 
 async function refreshRemoteData(localPath, localDraft) {
-  const remoteData = await fetchRemoteData(localPath, { cacheBust: false, timeoutMs: 4500 });
+  const remoteData = await fetchRemoteData(localPath, { cacheBust: false, timeoutNotice: true });
   if (!remoteData) {
     return;
   }
