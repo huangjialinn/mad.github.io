@@ -140,6 +140,9 @@ function cacheDom() {
     "pet-images",
     "pet-list",
     "log-list"
+    ,
+    "tab-prev-btn",
+    "tab-next-btn"
   ];
   ids.forEach((id) => {
     dom[id] = document.getElementById(id);
@@ -405,6 +408,7 @@ function bindEvents() {
   addDomListener("save-settings-btn", "click", handleSaveSettings);
   addDomListener("save-members-btn", "click", handleSaveSettings);
   addDomListener("add-member-btn", "click", handleAddMember);
+  initStackedTabs();
   addDomListener("image-viewer-close", "click", closeImageViewer);
   if (dom["image-viewer"]) {
     dom["image-viewer"].addEventListener("click", (event) => {
@@ -456,6 +460,42 @@ function addDomListener(id, eventName, handler) {
     return;
   }
   element.addEventListener(eventName, handler);
+}
+
+function initStackedTabs() {
+  const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
+  if (!tabButtons.length) {
+    return;
+  }
+  const panels = Array.from(document.querySelectorAll(".stacked-panel"));
+
+  const setActive = (nextId) => {
+    tabButtons.forEach((btn) => {
+      const active = btn.dataset.tab === nextId;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    panels.forEach((panel) => {
+      panel.classList.toggle("is-active", panel.dataset.panel === nextId);
+    });
+  };
+
+  tabButtons.forEach((btn) => {
+    btn.addEventListener("click", () => setActive(btn.dataset.tab));
+  });
+
+  const rotate = (dir) => {
+    const activeIdx = tabButtons.findIndex((btn) => btn.classList.contains("is-active"));
+    const nextIdx = (activeIdx + dir + tabButtons.length) % tabButtons.length;
+    setActive(tabButtons[nextIdx].dataset.tab);
+  };
+
+  if (dom["tab-prev-btn"]) {
+    dom["tab-prev-btn"].addEventListener("click", () => rotate(-1));
+  }
+  if (dom["tab-next-btn"]) {
+    dom["tab-next-btn"].addEventListener("click", () => rotate(1));
+  }
 }
 
 function handleManageToggle() {

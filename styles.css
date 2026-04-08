@@ -24,7 +24,9 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background: transparent;
+  background: radial-gradient(circle at 20% 20%, rgba(34, 42, 78, 0.45), transparent 52%),
+    radial-gradient(circle at 80% 0%, rgba(18, 24, 54, 0.6), transparent 48%),
+    #05070d;
   color: var(--text);
   font-family: "Space Grotesk", "Noto Sans SC", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -50,10 +52,13 @@ body {
   z-index: -4;
   will-change: transform;
   background:
-    linear-gradient(180deg, #000000, #000000);
-  opacity: 1;
-  filter: none;
-  animation: none;
+    radial-gradient(circle at 14% 10%, rgba(76, 96, 186, 0.3), transparent 45%),
+    radial-gradient(circle at 86% 30%, rgba(46, 160, 210, 0.26), transparent 52%),
+    radial-gradient(circle at 45% 85%, rgba(102, 72, 190, 0.25), transparent 50%),
+    linear-gradient(180deg, rgba(3, 6, 12, 0.92), rgba(3, 6, 12, 0.94));
+  opacity: 0.9;
+  filter: blur(6px);
+  animation: aurora-drift 32s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -63,11 +68,11 @@ body {
   z-index: -3;
   will-change: transform;
   background-image:
-    radial-gradient(1.5px 1.5px at 10% 20%, rgba(255, 255, 255, 0.6), transparent),
-    radial-gradient(1px 1px at 35% 75%, rgba(210, 228, 255, 0.5), transparent),
-    radial-gradient(1.2px 1.2px at 70% 30%, rgba(200, 225, 255, 0.55), transparent),
-    radial-gradient(1px 1px at 85% 65%, rgba(255, 255, 255, 0.45), transparent),
-    radial-gradient(1.4px 1.4px at 55% 50%, rgba(220, 236, 255, 0.6), transparent);
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(1.2px 1.2px at 35% 75%, rgba(210, 228, 255, 0.6), transparent),
+    radial-gradient(1.3px 1.3px at 70% 30%, rgba(200, 225, 255, 0.65), transparent),
+    radial-gradient(1px 1px at 85% 65%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1.4px 1.4px at 55% 50%, rgba(220, 236, 255, 0.7), transparent);
   background-size: 900px 900px, 980px 980px, 860px 860px, 1020px 1020px, 940px 940px;
   animation: starflow 72s linear infinite, star-twinkle 4.8s ease-in-out infinite alternate;
   pointer-events: none;
@@ -79,13 +84,13 @@ body {
   z-index: -3;
   will-change: transform;
   background-image:
-    radial-gradient(1px 1px at 12% 12%, rgba(210, 230, 255, 0.45), transparent),
-    radial-gradient(0.9px 0.9px at 42% 22%, rgba(220, 238, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 12% 12%, rgba(210, 230, 255, 0.4), transparent),
+    radial-gradient(0.9px 0.9px at 42% 22%, rgba(220, 238, 255, 0.35), transparent),
     radial-gradient(1px 1px at 68% 78%, rgba(220, 238, 255, 0.35), transparent),
-    radial-gradient(0.8px 0.8px at 80% 40%, rgba(210, 230, 255, 0.35), transparent),
-    radial-gradient(0.9px 0.9px at 25% 85%, rgba(220, 238, 255, 0.4), transparent);
+    radial-gradient(0.8px 0.8px at 80% 40%, rgba(210, 230, 255, 0.3), transparent),
+    radial-gradient(0.9px 0.9px at 25% 85%, rgba(220, 238, 255, 0.35), transparent);
   background-size: 1400px 1400px, 1320px 1320px, 1500px 1500px, 1380px 1380px, 1460px 1460px;
-  opacity: 0.4;
+  opacity: 0.45;
   animation: star-drift-slow 160s linear infinite;
   pointer-events: none;
 }
@@ -94,6 +99,9 @@ body {
   position: fixed;
   inset: -10%;
   z-index: -2;
+  background-image:
+    linear-gradient(120deg, transparent 18%, rgba(120, 155, 255, 0.14) 32%, transparent 52%),
+    linear-gradient(200deg, transparent 28%, rgba(80, 210, 255, 0.14) 44%, transparent 60%);
   will-change: transform;
   background-image:
     linear-gradient(120deg, transparent 18%, rgba(120, 155, 255, 0.12) 32%, transparent 52%),

@@ -86,24 +86,36 @@
       </div>
     </section>
 
-    <section class="layout">
-      <article class="card span-2">
-        <h2>搞事日历</h2>
-        <div class="calendar-head">
-          <button id="prev-month-btn" type="button" class="ghost">上个月</button>
-          <strong id="calendar-title"></strong>
-          <button id="next-month-btn" type="button" class="ghost">下个月</button>
+    <section class="stacked">
+      <div class="stacked-head">
+        <div class="stacked-tabs" role="tablist" aria-label="内容切换">
+          <button class="tab-btn is-active" type="button" data-tab="calendar" role="tab" aria-selected="true">搞事日历</button>
+          <button class="tab-btn" type="button" data-tab="honor" role="tab" aria-selected="false">全场最佳</button>
+          <button class="tab-btn" type="button" data-tab="pet" role="tab" aria-selected="false">灵宠</button>
         </div>
-        <div id="calendar-grid" class="calendar-grid"></div>
-        <div class="selected-events">
-          <h3 id="selected-date-title"></h3>
-          <div id="selected-date-events"></div>
+        <div class="stacked-nav">
+          <button id="tab-prev-btn" type="button" class="ghost" aria-label="上一个">←</button>
+          <button id="tab-next-btn" type="button" class="ghost" aria-label="下一个">→</button>
         </div>
-      </article>
+      </div>
 
-      <article class="card hidden" data-admin-only="true">
-        <h2>新增搞事</h2>
-        <form id="event-form" data-edit-only="true">
+      <div class="stacked-panels">
+        <article class="card stacked-panel is-active" data-panel="calendar" role="tabpanel">
+          <h2>搞事日历</h2>
+          <div class="calendar-head">
+            <button id="prev-month-btn" type="button" class="ghost">上个月</button>
+            <strong id="calendar-title"></strong>
+            <button id="next-month-btn" type="button" class="ghost">下个月</button>
+          </div>
+          <div id="calendar-grid" class="calendar-grid"></div>
+          <div class="selected-events">
+            <h3 id="selected-date-title"></h3>
+            <div id="selected-date-events"></div>
+          </div>
+
+          <div class="card nested hidden" data-admin-only="true">
+            <h2>新增搞事</h2>
+            <form id="event-form" data-edit-only="true">
           <label>
             日期
             <input id="event-date" type="date" required>
@@ -142,17 +154,17 @@
             <small id="event-image-hint" class="muted">喝酒搞事最多 1 张；吃饭搞事最多 9 张；运动搞事不需要图片。手机建议单张 8MB 以内。</small>
           </label>
           <button type="submit">新增搞事</button>
-        </form>
-      </article>
+            </form>
+          </div>
+        </article>
 
-      <article class="card">
-        <h2>全场最佳</h2>
-        <div id="honor-list" class="stack"></div>
-      </article>
+        <article class="card stacked-panel" data-panel="honor" role="tabpanel">
+          <h2>全场最佳</h2>
+          <div id="honor-list" class="stack"></div>
 
-      <article class="card hidden" data-admin-only="true">
-        <h2>新增全场最佳</h2>
-        <form id="honor-form" data-edit-only="true">
+          <div class="card nested hidden" data-admin-only="true">
+            <h2>新增全场最佳</h2>
+            <form id="honor-form" data-edit-only="true">
           <label>
             日期
             <input id="honor-date" type="date" required>
@@ -170,17 +182,17 @@
             <input id="honor-images" type="file" accept="image/*" multiple>
           </label>
           <button type="submit">新增全场最佳</button>
-        </form>
-      </article>
+            </form>
+          </div>
+        </article>
 
-      <article class="card">
-        <h2>灵宠</h2>
-        <div id="pet-list" class="stack"></div>
-      </article>
+        <article class="card stacked-panel" data-panel="pet" role="tabpanel">
+          <h2>灵宠</h2>
+          <div id="pet-list" class="stack"></div>
 
-      <article class="card hidden" data-admin-only="true">
-        <h2>新增灵宠</h2>
-        <form id="pet-form" data-edit-only="true">
+          <div class="card nested hidden" data-admin-only="true">
+            <h2>新增灵宠</h2>
+            <form id="pet-form" data-edit-only="true">
           <label>
             成员
             <select id="pet-member" required></select>
@@ -198,9 +210,13 @@
             <input id="pet-images" type="file" accept="image/*" multiple>
           </label>
           <button type="submit">新增灵宠</button>
-        </form>
-      </article>
+            </form>
+          </div>
+        </article>
+      </div>
+    </section>
 
+    <section class="layout">
       <article class="card hidden" data-admin-only="true">
         <h2>更新日志</h2>
         <div id="log-list" class="stack"></div>
