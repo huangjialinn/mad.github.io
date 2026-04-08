@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-08T03:42:04.623Z",
+  "updatedAt": "2026-04-08T07:42:14.245Z",
   "settings": {
     "siteTitle": "一车面包人1",
     "siteTagline": "这是一个减肥群1",
@@ -88,11 +88,34 @@
       "sportTime": "",
       "createdAt": "2026-04-08T03:15:33.419Z",
       "createdBy": "admin"
+    },
+    {
+      "id": "event_62f7f685-9671-4ae5-9fb4-0a7e85b6e7aa",
+      "type": "sport",
+      "date": "2026-04-08",
+      "location": "yg",
+      "memberIds": [
+        "m1",
+        "m2",
+        "m4"
+      ],
+      "images": [],
+      "mealScore": null,
+      "activity": "羽毛球",
+      "sportTime": "2026-04-05T15:41",
+      "createdAt": "2026-04-08T07:42:14.245Z",
+      "createdBy": "admin"
     }
   ],
   "honors": [],
   "pets": [],
   "logs": [
+    {
+      "id": "log_b6cac0ac-2a7f-408d-abcb-1d64f01eea79",
+      "text": "2026年4月8日，新增一次SPORT。",
+      "actorId": "admin",
+      "timestamp": "2026-04-08T07:42:14.245Z"
+    },
     {
       "id": "log_96d0dae2-3094-4910-ad8c-f9ec7ecce9d3",
       "text": "更新了站点配置与成员信息。",
