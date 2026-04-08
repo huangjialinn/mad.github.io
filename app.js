@@ -404,7 +404,7 @@ function ensureGithubToken() {
 
 async function loadDataFromStorage() {
   const localDraft = loadLocalDraft();
-  const localPath = APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
+  const localPath = buildRawDataUrl(APP_CONFIG.github) || APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
   try {
     const response = await fetch(`${localPath}?t=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) {
@@ -620,6 +620,13 @@ function buildContentsApiUrl(config) {
     .map((part) => encodeURIComponent(part))
     .join("/");
   return `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${encodedPath}`;
+}
+
+function buildRawDataUrl(config) {
+  if (!config || !config.owner || !config.repo || !config.branch || !config.dataPath) {
+    return "";
+  }
+  return `https://raw.githubusercontent.com/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/${encodeURIComponent(config.branch)}/${config.dataPath}`;
 }
 
 async function extractGithubError(response) {
