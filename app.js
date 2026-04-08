@@ -286,6 +286,7 @@ function createMemberEditorRow(member) {
   const row = document.createElement("div");
   row.className = "member-row";
   row.dataset.id = member.id;
+  row.dataset.avatar = member.avatar || "";
 
   const nameLabel = document.createElement("label");
   nameLabel.textContent = "姓名";
@@ -295,17 +296,8 @@ function createMemberEditorRow(member) {
   nameInput.className = "member-name";
   nameLabel.appendChild(nameInput);
 
-  const avatarLabel = document.createElement("label");
-  avatarLabel.textContent = "头像";
-  const avatarInput = document.createElement("input");
-  avatarInput.type = "text";
-  avatarInput.value = member.avatar || "";
-  avatarInput.placeholder = "由上传自动生成";
-  avatarInput.className = "member-avatar hidden";
-  avatarLabel.appendChild(avatarInput);
-
   const uploadLabel = document.createElement("label");
-  uploadLabel.textContent = "头像上传";
+  uploadLabel.textContent = "添加头像";
   const uploadInput = document.createElement("input");
   uploadInput.type = "file";
   uploadInput.accept = "image/*";
@@ -317,8 +309,9 @@ function createMemberEditorRow(member) {
     }
     try {
       const dataUrl = await readImageFiles([file], 1);
-      avatarInput.value = Array.isArray(dataUrl) ? dataUrl[0] : dataUrl;
-      updateMemberPreview(row, avatarInput.value);
+      const nextAvatar = Array.isArray(dataUrl) ? dataUrl[0] : dataUrl;
+      row.dataset.avatar = nextAvatar;
+      updateMemberPreview(row, nextAvatar);
     } catch (error) {
       alert(error.message);
     }
@@ -329,14 +322,9 @@ function createMemberEditorRow(member) {
   preview.className = "member-avatar-preview";
   updateMemberPreviewElement(preview, member.avatar || "");
 
-  avatarInput.addEventListener("input", () => {
-    updateMemberPreview(row, avatarInput.value.trim());
-  });
-
   row.appendChild(nameLabel);
-  row.appendChild(avatarLabel);
-  row.appendChild(uploadLabel);
   row.appendChild(preview);
+  row.appendChild(uploadLabel);
   return row;
 }
 
@@ -397,7 +385,7 @@ function handleSaveSettings() {
     dom["member-list"].querySelectorAll(".member-row").forEach((row) => {
       const id = row.dataset.id || makeId("member");
       const name = row.querySelector(".member-name")?.value.trim() || "成员";
-      const avatar = row.querySelector(".member-avatar")?.value.trim() || "";
+      const avatar = row.dataset.avatar || "";
       nextMembers.push({ id, name, avatar });
     });
   }
