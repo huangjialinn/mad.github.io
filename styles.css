@@ -686,6 +686,26 @@ button:disabled {
   box-shadow: 0 8px 16px rgba(8, 16, 36, 0.5);
 }
 
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.member-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(10, 16, 30, 0.85);
+}
+
+.member-row label {
+  margin: 0;
+}
+
 .image-viewer {
   position: fixed;
   inset: 0;

@@ -56,6 +56,36 @@
       <p id="sync-status" class="status muted">同步状态：未配置 GitHub Token</p>
     </section>
 
+    <section class="card hidden" data-admin-only="true">
+      <h2>站点配置</h2>
+      <div class="github-grid">
+        <label>
+          标题
+          <input id="settings-title" type="text" placeholder="站点标题">
+        </label>
+        <label>
+          备注
+          <input id="settings-tagline" type="text" placeholder="站点备注">
+        </label>
+        <label class="token-label">
+          滚动文字
+          <input id="settings-ticker" type="text" placeholder="滚动公告内容">
+        </label>
+      </div>
+      <div class="actions">
+        <button id="save-settings-btn" type="button">保存配置</button>
+      </div>
+    </section>
+
+    <section class="card hidden" data-admin-only="true">
+      <h2>成员管理</h2>
+      <div id="member-list" class="member-list"></div>
+      <div class="actions">
+        <button id="add-member-btn" type="button" class="ghost">添加成员</button>
+        <button id="save-members-btn" type="button">保存成员</button>
+      </div>
+    </section>
+
     <section class="layout">
       <article class="card span-2">
         <h2>搞事日历</h2>
@@ -171,7 +201,7 @@
         </form>
       </article>
 
-      <article class="card">
+      <article class="card hidden" data-admin-only="true">
         <h2>更新日志</h2>
         <div id="log-list" class="stack"></div>
       </article>

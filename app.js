@@ -44,7 +44,7 @@ const EVENT_TYPE_META = {
   sport: { label: "SPORT", maxImages: 0 }
 };
 
-const MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
+let MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
 const UNKNOWN_MEMBER = { id: "unknown", name: "未知成员", avatar: "./png/p1.png" };
 const EMPTY_COUNTER = Object.freeze({ drink: 0, meal: 0, sport: 0 });
 const ADMIN_ACTOR_ID = "admin";
@@ -71,6 +71,7 @@ async function init() {
   cacheDom();
   applyHeader();
   populateMemberControls();
+  renderSettingsEditor();
   bindEvents();
   setupDefaultDates();
   applyEventTypeRules();
@@ -78,6 +79,7 @@ async function init() {
   window.addEventListener("beforeunload", flushPendingDraftSync);
 
   await loadDataFromStorage();
+  applyDataConfig();
   renderAll();
 }
 
@@ -94,6 +96,13 @@ function cacheDom() {
     "sync-status",
     "login-status",
     "sync-now-btn",
+    "settings-title",
+    "settings-tagline",
+    "settings-ticker",
+    "save-settings-btn",
+    "save-members-btn",
+    "member-list",
+    "add-member-btn",
     "image-viewer",
     "image-viewer-img",
     "image-viewer-close",
@@ -143,6 +152,31 @@ function applyHeader() {
   dom["site-title"].setAttribute("data-text", APP_CONFIG.siteTitle);
   dom["site-tagline"].textContent = APP_CONFIG.siteTagline;
   renderTicker();
+}
+
+function setMembers(members) {
+  const safe = Array.isArray(members) ? members : [];
+  APP_CONFIG.members = safe;
+  MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
+}
+
+function applyDataConfig() {
+  const settings = state.data.settings || {};
+  if (settings.siteTitle) {
+    APP_CONFIG.siteTitle = settings.siteTitle;
+  }
+  if (settings.siteTagline) {
+    APP_CONFIG.siteTagline = settings.siteTagline;
+  }
+  if (settings.tickerText) {
+    APP_CONFIG.tickerText = settings.tickerText;
+  }
+  if (Array.isArray(state.data.members) && state.data.members.length) {
+    setMembers(state.data.members);
+  }
+  applyHeader();
+  populateMemberControls();
+  renderSettingsEditor();
 }
 
 function renderTicker() {
@@ -217,9 +251,120 @@ function populateMemberControls() {
   dom["event-member-checkboxes"].appendChild(chipsFragment);
 }
 
+function renderSettingsEditor() {
+  if (dom["settings-title"]) {
+    dom["settings-title"].value = APP_CONFIG.siteTitle || "";
+  }
+  if (dom["settings-tagline"]) {
+    dom["settings-tagline"].value = APP_CONFIG.siteTagline || "";
+  }
+  if (dom["settings-ticker"]) {
+    dom["settings-ticker"].value = APP_CONFIG.tickerText || "";
+  }
+  renderMemberEditorList();
+}
+
+function renderMemberEditorList() {
+  if (!dom["member-list"]) {
+    return;
+  }
+  dom["member-list"].innerHTML = "";
+  const fragment = document.createDocumentFragment();
+  APP_CONFIG.members.forEach((member) => {
+    fragment.appendChild(createMemberEditorRow(member));
+  });
+  dom["member-list"].appendChild(fragment);
+}
+
+function createMemberEditorRow(member) {
+  const row = document.createElement("div");
+  row.className = "member-row";
+  row.dataset.id = member.id;
+
+  const nameLabel = document.createElement("label");
+  nameLabel.textContent = "姓名";
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.value = member.name || "";
+  nameInput.className = "member-name";
+  nameLabel.appendChild(nameInput);
+
+  const avatarLabel = document.createElement("label");
+  avatarLabel.textContent = "头像";
+  const avatarInput = document.createElement("input");
+  avatarInput.type = "text";
+  avatarInput.value = member.avatar || "";
+  avatarInput.placeholder = "./png/p1.png";
+  avatarInput.className = "member-avatar";
+  avatarLabel.appendChild(avatarInput);
+
+  row.appendChild(nameLabel);
+  row.appendChild(avatarLabel);
+  return row;
+}
+
+function handleAddMember() {
+  const next = {
+    id: makeId("member"),
+    name: "新成员",
+    avatar: "./png/p1.png"
+  };
+  APP_CONFIG.members.push(next);
+  setMembers(APP_CONFIG.members);
+  renderMemberEditorList();
+}
+
+function handleSaveSettings() {
+  if (!canEdit()) {
+    return;
+  }
+  const title = dom["settings-title"] ? dom["settings-title"].value.trim() : "";
+  const tagline = dom["settings-tagline"] ? dom["settings-tagline"].value.trim() : "";
+  const ticker = dom["settings-ticker"] ? dom["settings-ticker"].value.trim() : "";
+
+  if (title) {
+    APP_CONFIG.siteTitle = title;
+  }
+  if (tagline) {
+    APP_CONFIG.siteTagline = tagline;
+  }
+  if (ticker) {
+    APP_CONFIG.tickerText = ticker;
+  }
+
+  const nextMembers = [];
+  if (dom["member-list"]) {
+    dom["member-list"].querySelectorAll(".member-row").forEach((row) => {
+      const id = row.dataset.id || makeId("member");
+      const name = row.querySelector(".member-name")?.value.trim() || "成员";
+      const avatar = row.querySelector(".member-avatar")?.value.trim() || "./png/p1.png";
+      nextMembers.push({ id, name, avatar });
+    });
+  }
+
+  setMembers(nextMembers);
+  state.data.settings = {
+    siteTitle: APP_CONFIG.siteTitle,
+    siteTagline: APP_CONFIG.siteTagline,
+    tickerText: APP_CONFIG.tickerText
+  };
+  state.data.members = APP_CONFIG.members;
+  addLog("更新了站点配置与成员信息。");
+  persistLocalDraft(true);
+  queueGithubSync();
+  applyHeader();
+  populateMemberControls();
+  renderHonorList();
+  renderPetList();
+  renderSelectedDateEvents();
+}
+
 function bindEvents() {
   addDomListener("admin-login-form", "submit", handleAdminLogin);
   addDomListener("sync-now-btn", "click", handleSyncNow);
+  addDomListener("save-settings-btn", "click", handleSaveSettings);
+  addDomListener("save-members-btn", "click", handleSaveSettings);
+  addDomListener("add-member-btn", "click", handleAddMember);
   addDomListener("image-viewer-close", "click", closeImageViewer);
   if (dom["image-viewer"]) {
     dom["image-viewer"].addEventListener("click", (event) => {
@@ -1297,6 +1442,12 @@ function normalizeData(raw) {
   return {
     version: Number(source.version || 1),
     updatedAt: source.updatedAt || new Date().toISOString(),
+    settings: {
+      siteTitle: source.settings?.siteTitle || APP_CONFIG.siteTitle,
+      siteTagline: source.settings?.siteTagline || APP_CONFIG.siteTagline,
+      tickerText: source.settings?.tickerText || APP_CONFIG.tickerText
+    },
+    members: Array.isArray(source.members) && source.members.length ? source.members : APP_CONFIG.members,
     events: Array.isArray(source.events) ? source.events : [],
     honors: Array.isArray(source.honors) ? source.honors : [],
     pets: Array.isArray(source.pets) ? source.pets : [],
@@ -1308,6 +1459,12 @@ function createEmptyData() {
   return {
     version: 1,
     updatedAt: new Date().toISOString(),
+    settings: {
+      siteTitle: APP_CONFIG.siteTitle,
+      siteTagline: APP_CONFIG.siteTagline,
+      tickerText: APP_CONFIG.tickerText
+    },
+    members: APP_CONFIG.members,
     events: [],
     honors: [],
     pets: [],
