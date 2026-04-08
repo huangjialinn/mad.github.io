@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-08T10:14:11.216Z",
+  "updatedAt": "2026-04-08T10:16:58.121Z",
   "settings": {
     "siteTitle": "一车面包人",
     "siteTagline": "YG减肥罚款监督群网站",
@@ -60,6 +60,18 @@
   "honors": [],
   "pets": [],
   "logs": [
+    {
+      "id": "log_0bb1eb8e-b3f5-423c-a2f1-09579df0ad29",
+      "text": "更新了站点配置与成员信息。",
+      "actorId": "admin",
+      "timestamp": "2026-04-08T10:16:58.121Z"
+    },
+    {
+      "id": "log_df0672ae-0d35-42bf-91c3-a67e5f879bb0",
+      "text": "GitHub 同步成功。",
+      "actorId": "admin",
+      "timestamp": "2026-04-08T10:16:49.218Z"
+    },
     {
       "id": "log_2c365987-b8f4-4d38-874d-0bf19841406f",
       "text": "更新了站点配置与成员信息。",
