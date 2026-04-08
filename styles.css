@@ -702,6 +702,57 @@ button:disabled {
   margin-top: 12px;
 }
 
+.calendar-awards {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid rgba(120, 140, 190, 0.22);
+  border-radius: 12px;
+  background: rgba(12, 18, 30, 0.88);
+}
+
+.calendar-awards h3 {
+  margin-bottom: 10px;
+}
+
+.award-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.award-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(120, 140, 190, 0.2);
+  border-radius: 10px;
+  background: rgba(14, 20, 34, 0.85);
+}
+
+.award-title {
+  font-weight: 700;
+  color: #cfe0ff;
+  white-space: nowrap;
+}
+
+.award-winners {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.award-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
 .summary-item {
   border: 1px solid rgba(120, 140, 190, 0.22);
   border-radius: 12px;
@@ -1200,6 +1251,16 @@ code {
 
   .stacked-panel {
     margin-top: 16px;
+  }
+
+  .award-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .award-winners {
+    justify-content: flex-start;
+    text-align: left;
   }
 
 }

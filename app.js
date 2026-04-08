@@ -114,6 +114,7 @@ function cacheDom() {
     "summary-drink",
     "summary-meal",
     "summary-sport",
+    "monthly-awards",
     "selected-date-title",
     "selected-date-events",
     "event-form",
@@ -1269,6 +1270,7 @@ function renderCalendar() {
   const fragment = document.createDocumentFragment();
   const countersByDate = buildEventCountersByDate(state.data.events);
   updateMonthlySummary(year, month);
+  renderMonthlyAwards(year, month);
   const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
   weekdays.forEach((name) => {
     const el = document.createElement("div");
@@ -1397,6 +1399,122 @@ function updateMonthlySummary(year, month) {
   dom["summary-drink"].textContent = String(counts.drink);
   dom["summary-meal"].textContent = String(counts.meal);
   dom["summary-sport"].textContent = String(counts.sport);
+}
+
+function renderMonthlyAwards(year, month) {
+  const wrap = dom["monthly-awards"];
+  if (!wrap) {
+    return;
+  }
+  wrap.innerHTML = "";
+  const counters = buildMonthlyMemberCounters(year, month);
+  const awards = [
+    { key: "sport", title: "头顶尖尖" },
+    { key: "drink", title: "酒瓶座" },
+    { key: "meal", title: "良子" }
+  ];
+
+  awards.forEach((award) => {
+    const max = getMaxCount(counters, award.key);
+    const winners = max > 0 ? getWinners(counters, award.key, max) : [];
+    const row = document.createElement("div");
+    row.className = "award-item";
+
+    const label = document.createElement("span");
+    label.className = "award-title";
+    label.textContent = award.title;
+    row.appendChild(label);
+
+    const list = document.createElement("div");
+    list.className = "award-winners";
+    if (!winners.length) {
+      const empty = document.createElement("span");
+      empty.className = "muted";
+      empty.textContent = "暂无";
+      list.appendChild(empty);
+    } else {
+      winners.forEach((member) => {
+        const person = document.createElement("span");
+        person.className = "award-person";
+        const avatarShell = document.createElement("span");
+        avatarShell.className = "avatar-shell";
+        if (member.avatar) {
+          const avatar = document.createElement("img");
+          avatar.className = "avatar";
+          avatar.src = member.avatar;
+          avatar.alt = member.name;
+          avatar.loading = "lazy";
+          avatar.decoding = "async";
+          avatarShell.appendChild(avatar);
+        } else {
+          const avatar = document.createElement("span");
+          avatar.className = "avatar avatar-empty";
+          avatar.textContent = "未上传";
+          avatarShell.appendChild(avatar);
+        }
+        person.appendChild(avatarShell);
+        const name = document.createElement("span");
+        name.textContent = member.name;
+        person.appendChild(name);
+        list.appendChild(person);
+      });
+    }
+    row.appendChild(list);
+    wrap.appendChild(row);
+  });
+}
+
+function buildMonthlyMemberCounters(year, month) {
+  const counters = new Map();
+  APP_CONFIG.members.forEach((member) => {
+    counters.set(member.id, { member, drink: 0, meal: 0, sport: 0 });
+  });
+  for (const item of state.data.events) {
+    if (!item.date || !item.type) {
+      continue;
+    }
+    const dt = new Date(item.date);
+    if (Number.isNaN(dt.getTime())) {
+      continue;
+    }
+    if (dt.getFullYear() !== year || dt.getMonth() !== month) {
+      continue;
+    }
+    const memberIds = Array.isArray(item.memberIds) ? item.memberIds : [];
+    memberIds.forEach((memberId) => {
+      if (!counters.has(memberId)) {
+        const unknown = getMember(memberId);
+        counters.set(memberId, { member: unknown, drink: 0, meal: 0, sport: 0 });
+      }
+      const row = counters.get(memberId);
+      if (item.type === "drink") {
+        row.drink += 1;
+      } else if (item.type === "meal") {
+        row.meal += 1;
+      } else if (item.type === "sport") {
+        row.sport += 1;
+      }
+    });
+  }
+  return counters;
+}
+
+function getMaxCount(counters, key) {
+  let max = 0;
+  counters.forEach((row) => {
+    max = Math.max(max, row[key] || 0);
+  });
+  return max;
+}
+
+function getWinners(counters, key, max) {
+  const winners = [];
+  counters.forEach((row) => {
+    if ((row[key] || 0) === max) {
+      winners.push(row.member);
+    }
+  });
+  return winners;
 }
 
 function renderSelectedDateEvents() {
