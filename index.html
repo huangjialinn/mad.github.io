@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -30,28 +30,6 @@
       </div>
       <div class="hero-side"></div>
     </header>
-
-    <section id="login-panel" class="card hidden">
-      <h2>登录与权限</h2>
-      <div class="login-grid">
-        <form id="admin-login-form" class="inline-form" data-edit-only="false">
-          <label>
-            管理密码
-            <input id="admin-password" type="password" required placeholder="输入管理密码">
-          </label>
-          <label>
-            GitHub Token
-            <input id="admin-token" type="password" placeholder="repo 写权限 Token">
-          </label>
-          <button type="submit">进入管理模式</button>
-        </form>
-      </div>
-      <p id="login-status" class="status">当前状态：未登录管理权限（只读）</p>
-      <div class="actions" data-admin-only="true">
-        <button id="sync-now-btn" type="button" class="ghost">同步到 GitHub</button>
-      </div>
-      <p id="sync-status" class="status muted">同步状态：未配置 GitHub Token</p>
-    </section>
 
     <section class="card hidden" data-admin-only="true">
       <h2>站点配置</h2>
@@ -156,10 +134,10 @@
           </div>
       </article>
 
-      <section class="card calendar-awards-section">
+      <article class="card stacked-panel awards-panel" data-panel="awards" role="region">
         <h2>每月表彰</h2>
         <div class="award-list" id="monthly-awards"></div>
-      </section>
+      </article>
 
       <article class="card stacked-panel" data-panel="honor" role="tabpanel">
           <h2>全场最佳</h2>
@@ -223,6 +201,28 @@
         <h2>更新日志</h2>
         <div id="log-list" class="stack"></div>
       </article>
+    </section>
+
+    <section id="login-panel" class="card hidden">
+      <h2>登录与权限</h2>
+      <div class="login-grid">
+        <form id="admin-login-form" class="inline-form" data-edit-only="false">
+          <label>
+            管理密码
+            <input id="admin-password" type="password" required placeholder="输入管理密码">
+          </label>
+          <label>
+            GitHub Token
+            <input id="admin-token" type="password" placeholder="repo 写权限 Token">
+          </label>
+          <button type="submit">进入管理模式</button>
+        </form>
+      </div>
+      <p id="login-status" class="status">当前状态：未登录管理权限（只读）</p>
+      <div class="actions" data-admin-only="true">
+        <button id="sync-now-btn" type="button" class="ghost">同步到 GitHub</button>
+      </div>
+      <p id="sync-status" class="status muted">同步状态：未配置 GitHub Token</p>
     </section>
 
     <div class="manage-cta">

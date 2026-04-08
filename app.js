@@ -35,8 +35,7 @@ const APP_CONFIG = {
 
 const STORAGE_KEYS = {
   draft: "mad_local_draft_v1",
-  githubToken: "mad_github_token_v1",
-  cache: "mad_cached_data_v1"
+  githubToken: "mad_github_token_v1"
 };
 
 const EVENT_TYPE_META = {
@@ -672,86 +671,37 @@ function ensureGithubToken() {
 
 async function loadDataFromStorage() {
   const localDraft = loadLocalDraft();
-  const cachedData = loadCachedData();
   const remotePath = buildRawDataUrl(APP_CONFIG.github) || APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
-  const fallbackPath = APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
-  let seeded = false;
+  let attempt = 0;
+
   if (localDraft) {
     state.data = normalizeData(localDraft);
-    setSyncStatus("已读取本地草稿，后台同步中...", false);
-    seeded = true;
-  } else if (cachedData) {
-    state.data = normalizeData(cachedData);
-    setSyncStatus("已读取缓存数据，后台同步中...", false);
-    seeded = true;
+    setSyncStatus("已读取本地草稿，正在拉取远端数据...", false);
   }
 
-  if (seeded) {
-    refreshRemoteData(remotePath, localDraft);
-    return;
-  }
-
-  let remoteResolved = false;
-  let fallbackUsed = false;
-  const fallbackTimer = window.setTimeout(async () => {
-    if (remoteResolved) {
-      return;
-    }
-    const fallbackData = await fetchRemoteData(fallbackPath, { cacheBust: true, timeoutNotice: false });
-    if (fallbackData) {
-      fallbackUsed = true;
-      state.data = normalizeData(fallbackData);
+  while (true) {
+    attempt += 1;
+    const remoteData = await fetchRemoteData(remotePath, { cacheBust: true, timeoutNotice: true });
+    if (remoteData) {
+      if (localDraft) {
+        const draftTs = getDataTimestamp(localDraft);
+        const fileTs = getDataTimestamp(remoteData);
+        const useDraft = draftTs >= fileTs;
+        state.data = normalizeData(useDraft ? localDraft : remoteData);
+        state.data.settings = remoteData.settings;
+        state.data.members = remoteData.members;
+      } else {
+        state.data = remoteData;
+      }
       persistLocalDraft(true);
-      saveCachedData(fallbackData);
       applyDataConfig();
       renderAll();
-      setSyncStatus("远端读取较慢，已先打开本地数据。", false);
+      setSyncStatus("已读取远端数据", false);
+      return;
     }
-  }, 1800);
 
-  try {
-    const remoteData = await fetchRemoteData(remotePath, { cacheBust: true, timeoutNotice: true });
-    remoteResolved = true;
-    window.clearTimeout(fallbackTimer);
-    if (!remoteData) {
-      throw new Error("empty");
-    }
-    if (fallbackUsed) {
-      const remoteTs = getDataTimestamp(remoteData);
-      const currentTs = getDataTimestamp(state.data);
-      if (remoteTs > currentTs) {
-        state.data = normalizeData(remoteData);
-        persistLocalDraft(true);
-        saveCachedData(remoteData);
-        applyDataConfig();
-        renderAll();
-        setSyncStatus("已更新到最新云端数据", false);
-      }
-      return;
-    }
-    if (localDraft) {
-      const draftTs = getDataTimestamp(localDraft);
-      const fileTs = getDataTimestamp(remoteData);
-      const useDraft = draftTs >= fileTs;
-      state.data = normalizeData(useDraft ? localDraft : remoteData);
-      state.data.settings = remoteData.settings;
-      state.data.members = remoteData.members;
-    } else {
-      state.data = remoteData;
-    }
-    persistLocalDraft(true);
-    saveCachedData(remoteData);
-    setSyncStatus("已读取远端数据", false);
-  } catch (error) {
-    remoteResolved = true;
-    window.clearTimeout(fallbackTimer);
-    if (localDraft) {
-      state.data = localDraft;
-      saveCachedData(localDraft);
-      return;
-    }
-    state.data = createEmptyData();
-    setSyncStatus("远端读取失败，已初始化空数据。", true);
+    setSyncStatus(`远端读取失败，正在重试（第 ${attempt} 次）...`, true);
+    await delay(1500);
   }
 }
 
@@ -768,26 +718,6 @@ function loadLocalDraft() {
   }
 }
 
-function loadCachedData() {
-  const text = localStorage.getItem(STORAGE_KEYS.cache);
-  if (!text) {
-    return null;
-  }
-  try {
-    return normalizeData(JSON.parse(text));
-  } catch (error) {
-    console.warn("缓存数据损坏", error);
-    return null;
-  }
-}
-
-function saveCachedData(data) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.cache, JSON.stringify(data));
-  } catch (error) {
-    console.warn("缓存写入失败", error);
-  }
-}
 
 function getDataTimestamp(data) {
   if (!data || !data.updatedAt) {
@@ -831,7 +761,6 @@ function flushPendingDraftSync() {
 
   try {
     localStorage.setItem(STORAGE_KEYS.draft, pendingDraftText);
-    saveCachedData(state.data);
     pendingDraftText = "";
     clearPendingPersistHandle();
     return true;
@@ -876,20 +805,20 @@ async function refreshRemoteData(localPath, localDraft) {
   if (localDraft) {
     const draftTs = getDataTimestamp(localDraft);
     if (draftTs >= remoteTs) {
-      saveCachedData(remoteData);
       return;
     }
   }
   if (remoteTs > currentTs) {
     state.data = normalizeData(remoteData);
     persistLocalDraft(true);
-    saveCachedData(remoteData);
     applyDataConfig();
     renderAll();
     setSyncStatus("已更新到最新云端数据", false);
-  } else {
-    saveCachedData(remoteData);
   }
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function clearPendingPersistHandle() {
