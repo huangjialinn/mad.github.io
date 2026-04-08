@@ -319,8 +319,10 @@ function createMemberEditorRow(member) {
   AVATAR_COLOR_PALETTE.forEach((color, idx) => {
     const option = document.createElement("option");
     option.value = color;
-    option.textContent = `颜色 ${idx + 1}`;
+    option.textContent = `■ 颜色 ${idx + 1}`;
     option.style.color = color;
+    option.style.background = color + "22";
+    option.style.fontWeight = "700";
     colorSelect.appendChild(option);
   });
   colorSelect.value = member.color || AVATAR_COLOR_PALETTE[0];

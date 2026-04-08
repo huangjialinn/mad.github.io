@@ -504,6 +504,7 @@ select.member-color {
   height: var(--control-h);
   border-radius: 12px;
   background: rgba(10, 14, 22, 0.9);
+  font-weight: 700;
 }
 
 input:focus,
