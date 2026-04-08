@@ -42,7 +42,7 @@ const STORAGE_KEYS = {
 const EVENT_TYPE_META = {
   drink: { label: "DRINK", maxImages: 1 },
   meal: { label: "HUNT", maxImages: 9 },
-  sport: { label: "SPORT", maxImages: 0 }
+  sport: { label: "SPORT", maxImages: 1 }
 };
 
 let MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
@@ -524,7 +524,7 @@ function applyEventTypeRules() {
   const type = dom["event-type"].value;
   const showMeal = type === "meal";
   const showSport = type === "sport";
-  const showImages = type !== "sport";
+  const showImages = true;
 
   dom["event-score-wrap"].classList.toggle("hidden", !showMeal);
   dom["event-activity-wrap"].classList.toggle("hidden", !showSport);
@@ -535,7 +535,7 @@ function applyEventTypeRules() {
     ? "喝酒搞事最多 1 张图片。"
     : type === "meal"
       ? "吃饭搞事最多 9 张图片。"
-      : "运动搞事不需要图片。";
+      : "运动搞事最多 1 张图片。";
   dom["event-image-hint"].textContent = hint;
 }
 
