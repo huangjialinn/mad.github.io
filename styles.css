@@ -706,6 +706,23 @@ button:disabled {
   margin: 0;
 }
 
+.member-avatar-upload {
+  height: auto;
+  min-height: var(--control-h);
+  padding: 8px 11px;
+  border-radius: 12px;
+}
+
+.member-avatar-preview {
+  grid-column: span 2;
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(7, 12, 24, 0.9);
+}
+
 .image-viewer {
   position: fixed;
   inset: 0;

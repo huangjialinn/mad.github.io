@@ -298,9 +298,49 @@ function createMemberEditorRow(member) {
   avatarInput.className = "member-avatar";
   avatarLabel.appendChild(avatarInput);
 
+  const uploadLabel = document.createElement("label");
+  uploadLabel.textContent = "头像上传";
+  const uploadInput = document.createElement("input");
+  uploadInput.type = "file";
+  uploadInput.accept = "image/*";
+  uploadInput.className = "member-avatar-upload";
+  uploadInput.addEventListener("change", async () => {
+    const file = uploadInput.files && uploadInput.files[0];
+    if (!file) {
+      return;
+    }
+    try {
+      const dataUrl = await readImageFiles([file], 1);
+      avatarInput.value = Array.isArray(dataUrl) ? dataUrl[0] : dataUrl;
+      updateMemberPreview(row, avatarInput.value);
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+  uploadLabel.appendChild(uploadInput);
+
+  const preview = document.createElement("img");
+  preview.className = "member-avatar-preview";
+  preview.alt = "头像预览";
+  preview.src = member.avatar || "";
+
+  avatarInput.addEventListener("input", () => {
+    updateMemberPreview(row, avatarInput.value.trim());
+  });
+
   row.appendChild(nameLabel);
   row.appendChild(avatarLabel);
+  row.appendChild(uploadLabel);
+  row.appendChild(preview);
   return row;
+}
+
+function updateMemberPreview(row, src) {
+  const preview = row.querySelector(".member-avatar-preview");
+  if (!preview) {
+    return;
+  }
+  preview.src = src || "";
 }
 
 function handleAddMember() {
