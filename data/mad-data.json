@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-08T07:42:14.245Z",
+  "updatedAt": "2026-04-08T08:53:37.737Z",
   "settings": {
-    "siteTitle": "一车面包人1",
-    "siteTagline": "这是一个减肥群1",
-    "tickerText": "李柏辰是GAY！啊"
+    "siteTitle": "一车面包人",
+    "siteTagline": "这是一个减肥群",
+    "tickerText": "李柏辰是GAY！"
   },
   "members": [
     {
@@ -110,6 +110,12 @@
   "honors": [],
   "pets": [],
   "logs": [
+    {
+      "id": "log_2ae35a2c-0ebd-49c1-8d6e-549fbbc61aaf",
+      "text": "更新了站点配置与成员信息。",
+      "actorId": "admin",
+      "timestamp": "2026-04-08T08:53:37.737Z"
+    },
     {
       "id": "log_b6cac0ac-2a7f-408d-abcb-1d64f01eea79",
       "text": "2026年4月8日，新增一次SPORT。",
