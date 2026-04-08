@@ -263,7 +263,7 @@ body {
 
 h1 {
   margin: 12px 0 8px;
-  font-size: clamp(4.2rem, 7.6vw, 6.6rem);
+  font-size: clamp(4.8rem, 8.6vw, 7.2rem);
   letter-spacing: -0.03em;
 }
 
