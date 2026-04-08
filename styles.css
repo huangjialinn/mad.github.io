@@ -1187,6 +1187,15 @@ code {
     display: none;
   }
 
+  .event-dots {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .dot {
+    width: min(88%, 72px);
+  }
+
   .stacked-panel {
     margin-top: 16px;
   }
