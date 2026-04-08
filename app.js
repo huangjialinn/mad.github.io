@@ -111,6 +111,9 @@ function cacheDom() {
     "next-month-btn",
     "calendar-title",
     "calendar-grid",
+    "summary-drink",
+    "summary-meal",
+    "summary-sport",
     "selected-date-title",
     "selected-date-events",
     "event-form",
@@ -1224,6 +1227,7 @@ function renderCalendar() {
   dom["calendar-grid"].innerHTML = "";
   const fragment = document.createDocumentFragment();
   const countersByDate = buildEventCountersByDate(state.data.events);
+  updateMonthlySummary(year, month);
   const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
   weekdays.forEach((name) => {
     const el = document.createElement("div");
@@ -1323,6 +1327,35 @@ function buildEventCountersByDate(events = []) {
     map.set(key, counter);
   }
   return map;
+}
+
+function updateMonthlySummary(year, month) {
+  if (!dom["summary-drink"] || !dom["summary-meal"] || !dom["summary-sport"]) {
+    return;
+  }
+  const counts = { drink: 0, meal: 0, sport: 0 };
+  for (const item of state.data.events) {
+    if (!item.date) {
+      continue;
+    }
+    const dt = new Date(item.date);
+    if (Number.isNaN(dt.getTime())) {
+      continue;
+    }
+    if (dt.getFullYear() !== year || dt.getMonth() !== month) {
+      continue;
+    }
+    if (item.type === "drink") {
+      counts.drink += 1;
+    } else if (item.type === "meal") {
+      counts.meal += 1;
+    } else if (item.type === "sport") {
+      counts.sport += 1;
+    }
+  }
+  dom["summary-drink"].textContent = String(counts.drink);
+  dom["summary-meal"].textContent = String(counts.meal);
+  dom["summary-sport"].textContent = String(counts.sport);
 }
 
 function renderSelectedDateEvents() {
