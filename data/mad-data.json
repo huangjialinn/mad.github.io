@@ -1,10 +1,94 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-03T00:00:00.000Z",
+  "updatedAt": "2026-04-08T03:04:18.215Z",
   "events": [],
   "honors": [],
   "pets": [],
   "logs": [
+    {
+      "id": "log_8dbde6b2-ea99-4b0f-9053-5ba0f25d9728",
+      "text": "2026年4月7日，删除一条DRINK。",
+      "actorId": "admin",
+      "timestamp": "2026-04-08T03:04:18.215Z"
+    },
+    {
+      "id": "log_9796861e-d46e-428b-a3fa-f7c99abad5ef",
+      "text": "2026年4月7日，新增一次DRINK。",
+      "actorId": "admin",
+      "timestamp": "2026-04-07T07:30:02.988Z"
+    },
+    {
+      "id": "log_7badb458-9710-4251-ae95-d42b02bf638e",
+      "text": "2026年4月4日，删除一条灵宠记录。",
+      "actorId": "admin",
+      "timestamp": "2026-04-04T12:50:04.280Z"
+    },
+    {
+      "id": "log_56c2b52c-f486-4e91-8e6f-bc2e6721656a",
+      "text": "2025年9月16日，删除一条全场最佳。",
+      "actorId": "admin",
+      "timestamp": "2026-04-04T12:50:01.350Z"
+    },
+    {
+      "id": "log_a1490fbd-65b9-4d5c-9cfc-568b1bddb21d",
+      "text": "2026年4月3日，删除一条吃饭搞事。",
+      "actorId": "admin",
+      "timestamp": "2026-04-04T12:49:58.299Z"
+    },
+    {
+      "id": "log_1c98e103-5fcc-42ab-9a31-da1600cd58db",
+      "text": "2026年4月3日，删除一条喝酒搞事。",
+      "actorId": "admin",
+      "timestamp": "2026-04-04T12:49:57.183Z"
+    },
+    {
+      "id": "log_b3865ee6-7b5d-41c6-a07a-ed3963c06e7c",
+      "text": "2025年9月16日，新增一条全场最佳。",
+      "actorId": "admin",
+      "timestamp": "2026-04-03T10:09:24.818Z"
+    },
+    {
+      "id": "log_4d5d39a9-92c2-442f-800f-5fc0671a4cb0",
+      "text": "2026年4月3日，删除一条喝酒搞事。",
+      "actorId": "admin",
+      "timestamp": "2026-04-03T10:08:23.005Z"
+    },
+    {
+      "id": "log_cff219aa-4ffb-4c1c-8928-15e3742c5813",
+      "text": "2026年4月3日，删除一条喝酒搞事。",
+      "actorId": "admin",
+      "timestamp": "2026-04-03T10:08:20.505Z"
+    },
+    {
+      "id": "log_5ab34413-d10e-4be3-9fa1-084a382489a9",
+      "text": "2026年4月3日，新增一条灵宠记录。",
+      "actorId": "admin",
+      "timestamp": "2026-04-03T10:07:58.518Z"
+    },
+    {
+      "id": "log_cb263245-efe6-4139-b202-155a0c62f0c4",
+      "text": "2026年4月3日，新增一次喝酒搞事。",
+      "actorId": "admin",
+      "timestamp": "2026-04-03T07:59:56.161Z"
+    },
+    {
+      "id": "log_415a567c-d54e-4f30-a964-264bf3c53415",
+      "text": "2026年4月3日，新增一次喝酒搞事。",
+      "actorId": "admin",
+      "timestamp": "2026-04-03T07:59:38.500Z"
+    },
+    {
+      "id": "log_094729d1-9fad-4e9f-bece-d9c187aa695c",
+      "text": "2026年4月3日，新增一次吃饭搞事。",
+      "actorId": "admin",
+      "timestamp": "2026-04-03T07:59:19.743Z"
+    },
+    {
+      "id": "log_d3bd27b5-350d-40b7-9174-f6bae6aee234",
+      "text": "2026年4月3日，新增一次喝酒搞事。",
+      "actorId": "admin",
+      "timestamp": "2026-04-03T07:47:18.425Z"
+    },
     {
       "id": "log_bootstrap",
       "text": "2026年4月3日，初始化 MAD 数据文件。",
