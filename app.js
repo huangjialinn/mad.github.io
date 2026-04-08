@@ -1,8 +1,8 @@
 ﻿/* 可修改配置：站点名称、标语、成员资料、云端持久化接口 */
 const APP_CONFIG = {
-  siteTitle: "一车面包人",
-  siteTagline: "这是一个减肥群",
-  tickerText: "李柏辰是GAY",
+  siteTitle: "NULLPTR",
+  siteTagline: "NULLPTR",
+  tickerText: "NULLPTR",
   adminPassword: "2026",
   github: {
     owner: "huangjialinn",
@@ -22,14 +22,14 @@ const APP_CONFIG = {
     jpegQuality: 0.82
   },
   members: [
-    { id: "m1", name: "YG", avatar: "./png/p1.png" },
-    { id: "m2", name: "P1", avatar: "./png/p2.png" },
-    { id: "m3", name: "烟", avatar: "./png/p3.png" },
-    { id: "m4", name: "轩", avatar: "./png/p4.png" },
-    { id: "m5", name: "陶", avatar: "./png/p5.png" },
-    { id: "m6", name: "柏", avatar: "./png/p6.png" },
-    { id: "m7", name: "姜", avatar: "./png/p7.png" },
-    { id: "m8", name: "二", avatar: "./png/p8.png" }
+    { id: "m1", name: "YG", avatar: "" },
+    { id: "m2", name: "P1", avatar: "" },
+    { id: "m3", name: "烟", avatar: "" },
+    { id: "m4", name: "轩", avatar: "" },
+    { id: "m5", name: "陶", avatar: "" },
+    { id: "m6", name: "柏", avatar: "" },
+    { id: "m7", name: "姜", avatar: "" },
+    { id: "m8", name: "叶", avatar: "" }
   ],
 };
 
@@ -46,7 +46,7 @@ const EVENT_TYPE_META = {
 };
 
 let MEMBER_MAP = new Map(APP_CONFIG.members.map((member) => [member.id, member]));
-const UNKNOWN_MEMBER = { id: "unknown", name: "未知成员", avatar: "./png/p1.png" };
+const UNKNOWN_MEMBER = { id: "unknown", name: "未知成员", avatar: "" };
 const EMPTY_COUNTER = Object.freeze({ drink: 0, meal: 0, sport: 0 });
 const ADMIN_ACTOR_ID = "admin";
 
@@ -325,10 +325,9 @@ function createMemberEditorRow(member) {
   });
   uploadLabel.appendChild(uploadInput);
 
-  const preview = document.createElement("img");
+  const preview = document.createElement("div");
   preview.className = "member-avatar-preview";
-  preview.alt = "头像预览";
-  preview.src = member.avatar || "";
+  updateMemberPreviewElement(preview, member.avatar || "");
 
   avatarInput.addEventListener("input", () => {
     updateMemberPreview(row, avatarInput.value.trim());
@@ -346,14 +345,29 @@ function updateMemberPreview(row, src) {
   if (!preview) {
     return;
   }
-  preview.src = src || "";
+  updateMemberPreviewElement(preview, src);
+}
+
+function updateMemberPreviewElement(preview, src) {
+  if (!preview) {
+    return;
+  }
+  if (src) {
+    preview.classList.remove("is-empty");
+    preview.style.backgroundImage = `url('${src}')`;
+    preview.textContent = "";
+  } else {
+    preview.classList.add("is-empty");
+    preview.style.backgroundImage = "none";
+    preview.textContent = "未上传";
+  }
 }
 
 function handleAddMember() {
   const next = {
     id: makeId("member"),
     name: "新成员",
-    avatar: "./png/p1.png"
+    avatar: ""
   };
   APP_CONFIG.members.push(next);
   setMembers(APP_CONFIG.members);
@@ -1497,15 +1511,22 @@ function makeEntryHead(title, extra, onDelete, member) {
   if (member) {
     const person = document.createElement("span");
     person.className = "person";
-    const avatar = document.createElement("img");
-    avatar.className = "avatar";
-    avatar.src = member.avatar;
-    avatar.alt = member.name;
-    avatar.loading = "lazy";
-    avatar.decoding = "async";
     const avatarShell = document.createElement("span");
     avatarShell.className = "avatar-shell";
-    avatarShell.appendChild(avatar);
+    if (member.avatar) {
+      const avatar = document.createElement("img");
+      avatar.className = "avatar";
+      avatar.src = member.avatar;
+      avatar.alt = member.name;
+      avatar.loading = "lazy";
+      avatar.decoding = "async";
+      avatarShell.appendChild(avatar);
+    } else {
+      const avatar = document.createElement("span");
+      avatar.className = "avatar avatar-empty";
+      avatar.textContent = "未上传";
+      avatarShell.appendChild(avatar);
+    }
     person.appendChild(avatarShell);
     const txt = document.createElement("strong");
     txt.textContent = title;
