@@ -1301,13 +1301,13 @@ function renderCalendar() {
     const dots = document.createElement("div");
     dots.className = "event-dots";
     if (counters.drink) {
-      dots.appendChild(makeDot(`酒 ${counters.drink}`, "dot dot-drink"));
+      dots.appendChild(makeDot("酒", "dot dot-drink"));
     }
     if (counters.meal) {
-      dots.appendChild(makeDot(`饭 ${counters.meal}`, "dot dot-meal"));
+      dots.appendChild(makeDot("饭", "dot dot-meal"));
     }
     if (counters.sport) {
-      dots.appendChild(makeDot(`动 ${counters.sport}`, "dot dot-sport"));
+      dots.appendChild(makeDot("动", "dot dot-sport"));
     }
     cell.appendChild(dots);
 
