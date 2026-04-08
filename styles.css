@@ -613,8 +613,8 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--panel-strong);
-  padding: 10px;
-  min-height: 96px;
+  padding: 8px;
+  min-height: 86px;
 }
 
 .calendar-weekday {
@@ -655,17 +655,17 @@ button:disabled {
 }
 
 .event-dots {
-  margin-top: 6px;
+  margin-top: 4px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
+  gap: 3px;
   width: 100%;
 }
 
 .dot {
   border-radius: 999px;
-  padding: 1px 6px;
-  font-size: 0.7rem;
+  padding: 1px 4px;
+  font-size: 0.6rem;
   line-height: 1.2;
   min-width: 0;
   display: flex;
@@ -1193,7 +1193,8 @@ code {
   }
 
   .dot {
-    width: min(88%, 72px);
+    width: min(88%, 86px);
+    font-size: 0.58rem;
   }
 
   .stacked-panel {
