@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-08T03:14:23.542Z",
+  "updatedAt": "2026-04-08T03:15:33.419Z",
   "events": [
     {
       "id": "event_94fc20f9-c8d5-4f2f-b6cc-862ff37eadac",
@@ -19,11 +19,34 @@
       "sportTime": "",
       "createdAt": "2026-04-08T03:14:23.542Z",
       "createdBy": "admin"
+    },
+    {
+      "id": "event_90b3082f-e99b-4a73-a900-92daf0216539",
+      "type": "meal",
+      "date": "2026-04-08",
+      "location": "火锅",
+      "memberIds": [
+        "m1",
+        "m2",
+        "m4"
+      ],
+      "images": [],
+      "mealScore": 0,
+      "activity": "",
+      "sportTime": "",
+      "createdAt": "2026-04-08T03:15:33.419Z",
+      "createdBy": "admin"
     }
   ],
   "honors": [],
   "pets": [],
   "logs": [
+    {
+      "id": "log_a266a32b-a131-4671-b693-085d7d0c6eed",
+      "text": "2026年4月8日，新增一次HUNT。",
+      "actorId": "admin",
+      "timestamp": "2026-04-08T03:15:33.419Z"
+    },
     {
       "id": "log_40288e07-2358-412c-8514-69ae0de89801",
       "text": "2026年4月8日，新增一次DRINK。",
