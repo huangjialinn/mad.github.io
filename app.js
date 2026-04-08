@@ -35,7 +35,8 @@ const APP_CONFIG = {
 
 const STORAGE_KEYS = {
   draft: "mad_local_draft_v1",
-  githubToken: "mad_github_token_v1"
+  githubToken: "mad_github_token_v1",
+  cache: "mad_cached_data_v1"
 };
 
 const EVENT_TYPE_META = {
@@ -619,13 +620,29 @@ function ensureGithubToken() {
 
 async function loadDataFromStorage() {
   const localDraft = loadLocalDraft();
+  const cachedData = loadCachedData();
   const localPath = buildRawDataUrl(APP_CONFIG.github) || APP_CONFIG.persistence.localDataPath || "data/mad-data.json";
+  let seeded = false;
+  if (localDraft) {
+    state.data = normalizeData(localDraft);
+    setSyncStatus("已读取本地草稿，后台同步中...", false);
+    seeded = true;
+  } else if (cachedData) {
+    state.data = normalizeData(cachedData);
+    setSyncStatus("已读取缓存数据，后台同步中...", false);
+    seeded = true;
+  }
+
+  if (seeded) {
+    refreshRemoteData(localPath, localDraft);
+    return;
+  }
+
   try {
-    const response = await fetch(`${localPath}?t=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    const localFileData = await fetchRemoteData(localPath, { cacheBust: true });
+    if (!localFileData) {
+      throw new Error("empty");
     }
-    const localFileData = normalizeData(await response.json());
     if (localDraft) {
       const draftTs = getDataTimestamp(localDraft);
       const fileTs = getDataTimestamp(localFileData);
@@ -637,10 +654,12 @@ async function loadDataFromStorage() {
       state.data = localFileData;
     }
     persistLocalDraft(true);
+    saveCachedData(localFileData);
     setSyncStatus("已读取本地数据文件", false);
   } catch (error) {
     if (localDraft) {
       state.data = localDraft;
+      saveCachedData(localDraft);
       return;
     }
     state.data = createEmptyData();
@@ -658,6 +677,27 @@ function loadLocalDraft() {
   } catch (error) {
     console.warn("本地草稿损坏", error);
     return null;
+  }
+}
+
+function loadCachedData() {
+  const text = localStorage.getItem(STORAGE_KEYS.cache);
+  if (!text) {
+    return null;
+  }
+  try {
+    return normalizeData(JSON.parse(text));
+  } catch (error) {
+    console.warn("缓存数据损坏", error);
+    return null;
+  }
+}
+
+function saveCachedData(data) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.cache, JSON.stringify(data));
+  } catch (error) {
+    console.warn("缓存写入失败", error);
   }
 }
 
@@ -703,6 +743,7 @@ function flushPendingDraftSync() {
 
   try {
     localStorage.setItem(STORAGE_KEYS.draft, pendingDraftText);
+    saveCachedData(state.data);
     pendingDraftText = "";
     clearPendingPersistHandle();
     return true;
@@ -711,6 +752,52 @@ function flushPendingDraftSync() {
     setSyncStatus("本地草稿空间不足，建议减少图片数量或压缩后再上传。", true);
     clearPendingPersistHandle();
     return false;
+  }
+}
+
+async function fetchRemoteData(localPath, { cacheBust = false, timeoutMs = 4500 } = {}) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  const url = cacheBust ? `${localPath}?t=${Date.now()}` : localPath;
+  try {
+    const response = await fetch(url, { cache: "no-cache", signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return normalizeData(await response.json());
+  } catch (error) {
+    if (error && error.name === "AbortError") {
+      setSyncStatus("远端读取超时，已使用缓存数据。", true);
+    }
+    return null;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+async function refreshRemoteData(localPath, localDraft) {
+  const remoteData = await fetchRemoteData(localPath, { cacheBust: false, timeoutMs: 4500 });
+  if (!remoteData) {
+    return;
+  }
+  const remoteTs = getDataTimestamp(remoteData);
+  const currentTs = getDataTimestamp(state.data);
+  if (localDraft) {
+    const draftTs = getDataTimestamp(localDraft);
+    if (draftTs >= remoteTs) {
+      saveCachedData(remoteData);
+      return;
+    }
+  }
+  if (remoteTs > currentTs) {
+    state.data = normalizeData(remoteData);
+    persistLocalDraft(true);
+    saveCachedData(remoteData);
+    applyDataConfig();
+    renderAll();
+    setSyncStatus("已更新到最新云端数据", false);
+  } else {
+    saveCachedData(remoteData);
   }
 }
 
