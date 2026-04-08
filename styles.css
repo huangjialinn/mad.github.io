@@ -388,7 +388,7 @@ h3 {
 
 .stacked-panel {
   grid-area: 1 / 1;
-  width: 88%;
+  width: 84%;
   justify-self: center;
   opacity: 0;
   transform: translateX(0) scale(0.98);
@@ -418,12 +418,12 @@ h3 {
 }
 
 .stacked-panel.is-prev {
-  transform: translateX(-58%) scale(0.96);
+  transform: translateX(-54%) scale(0.96);
   z-index: 2;
 }
 
 .stacked-panel.is-next {
-  transform: translateX(58%) scale(0.96);
+  transform: translateX(54%) scale(0.96);
   z-index: 2;
 }
 
@@ -445,11 +445,11 @@ h3 {
 .stacked-panel.is-prev:hover,
 .stacked-panel.is-next:hover {
   opacity: 0.75;
-  transform: translateX(-56%) scale(0.97);
+  transform: translateX(-52%) scale(0.97);
 }
 
 .stacked-panel.is-next:hover {
-  transform: translateX(56%) scale(0.97);
+  transform: translateX(52%) scale(0.97);
 }
 
 .span-2 {
@@ -1097,19 +1097,19 @@ code {
   }
 
   .stacked-panel.is-prev {
-    transform: translateX(-44%) scale(0.97);
+    transform: translateX(-40%) scale(0.97);
   }
 
   .stacked-panel.is-next {
-    transform: translateX(44%) scale(0.97);
+    transform: translateX(40%) scale(0.97);
   }
 
   .stacked-panel.is-prev:hover {
-    transform: translateX(-42%) scale(0.98);
+    transform: translateX(-38%) scale(0.98);
   }
 
   .stacked-panel.is-next:hover {
-    transform: translateX(42%) scale(0.98);
+    transform: translateX(38%) scale(0.98);
   }
 }
 
@@ -1154,19 +1154,19 @@ code {
   }
 
   .stacked-panel.is-prev {
-    transform: translateX(-30%) scale(0.98);
+    transform: translateX(-26%) scale(0.98);
   }
 
   .stacked-panel.is-next {
-    transform: translateX(30%) scale(0.98);
+    transform: translateX(26%) scale(0.98);
   }
 
   .stacked-panel.is-prev:hover {
-    transform: translateX(-28%) scale(0.99);
+    transform: translateX(-24%) scale(0.99);
   }
 
   .stacked-panel.is-next:hover {
-    transform: translateX(28%) scale(0.99);
+    transform: translateX(24%) scale(0.99);
   }
 
 }
