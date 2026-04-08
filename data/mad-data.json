@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "updatedAt": "2026-04-08T03:36:48.116Z",
+  "updatedAt": "2026-04-08T03:42:04.623Z",
   "settings": {
     "siteTitle": "一车面包人1",
     "siteTagline": "这是一个减肥群1",
-    "tickerText": "李柏辰是GAY！"
+    "tickerText": "李柏辰是GAY！啊"
   },
   "members": [
     {
@@ -46,6 +46,11 @@
       "id": "m8",
       "name": "二",
       "avatar": "./png/p8.png"
+    },
+    {
+      "id": "member_de5196d7-bf2a-4f9b-a6ad-e565cc2f903a",
+      "name": "新成员",
+      "avatar": "./png/p1.png"
     }
   ],
   "events": [
@@ -88,6 +93,18 @@
   "honors": [],
   "pets": [],
   "logs": [
+    {
+      "id": "log_96d0dae2-3094-4910-ad8c-f9ec7ecce9d3",
+      "text": "更新了站点配置与成员信息。",
+      "actorId": "admin",
+      "timestamp": "2026-04-08T03:42:04.623Z"
+    },
+    {
+      "id": "log_6b5aecb6-1668-4945-826b-db5bf22bcd6b",
+      "text": "GitHub 同步成功。",
+      "actorId": null,
+      "timestamp": "2026-04-08T03:36:52.236Z"
+    },
     {
       "id": "log_387bd8c2-1797-45ac-ae2a-47a71e69d5ec",
       "text": "更新了站点配置与成员信息。",
