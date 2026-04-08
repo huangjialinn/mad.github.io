@@ -141,11 +141,21 @@ body {
 }
 
 .page {
-  width: min(1220px, 94vw);
+  width: min(1320px, 96vw);
   margin: 22px auto 60px;
   padding-inline: 4px;
   position: relative;
   z-index: 1;
+}
+
+.page > section.card,
+.page > section.stacked > article.card {
+  width: min(1120px, 96vw);
+  margin-inline: auto;
+}
+
+.page > section.card {
+  margin-top: 22px;
 }
 
 .top-ticker {
