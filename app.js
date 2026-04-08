@@ -1497,7 +1497,7 @@ function getWinners(counters, key, max) {
 
 function renderSelectedDateEvents() {
   const date = state.selectedDate;
-  dom["selected-date-title"].textContent = `${formatCNDate(date)} 搞事`;
+  dom["selected-date-title"].textContent = "搞事";
   dom["selected-date-events"].innerHTML = "";
   const fragment = document.createDocumentFragment();
 
