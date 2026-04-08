@@ -575,7 +575,10 @@ async function loadDataFromStorage() {
     if (localDraft) {
       const draftTs = getDataTimestamp(localDraft);
       const fileTs = getDataTimestamp(localFileData);
-      state.data = draftTs >= fileTs ? localDraft : localFileData;
+      const preferDraft = draftTs >= fileTs;
+      const base = preferDraft ? localDraft : localFileData;
+      const fallback = preferDraft ? localFileData : localDraft;
+      state.data = mergeData(base, fallback);
     } else {
       state.data = localFileData;
     }
@@ -1453,6 +1456,46 @@ function normalizeData(raw) {
     pets: Array.isArray(source.pets) ? source.pets : [],
     logs: Array.isArray(source.logs) ? source.logs : []
   };
+}
+
+function mergeData(primary, fallback) {
+  const merged = normalizeData(primary);
+  const fallbackData = normalizeData(fallback);
+  const mergedSettings = merged.settings || {};
+  const fallbackSettings = fallbackData.settings || {};
+  const mergedIsDefault =
+    mergedSettings.siteTitle === APP_CONFIG.siteTitle &&
+    mergedSettings.siteTagline === APP_CONFIG.siteTagline &&
+    mergedSettings.tickerText === APP_CONFIG.tickerText;
+  const fallbackIsDifferent =
+    fallbackSettings.siteTitle !== APP_CONFIG.siteTitle ||
+    fallbackSettings.siteTagline !== APP_CONFIG.siteTagline ||
+    fallbackSettings.tickerText !== APP_CONFIG.tickerText;
+  if (mergedIsDefault && fallbackIsDifferent) {
+    merged.settings = fallbackSettings;
+  }
+
+  const mergedMembers = Array.isArray(merged.members) ? merged.members : [];
+  const fallbackMembers = Array.isArray(fallbackData.members) ? fallbackData.members : [];
+  const mergedLooksDefault = isSameMembers(mergedMembers, APP_CONFIG.members);
+  const fallbackLooksDifferent = !isSameMembers(fallbackMembers, APP_CONFIG.members);
+  if ((mergedMembers.length === 0 || mergedLooksDefault) && fallbackLooksDifferent) {
+    merged.members = fallbackMembers;
+  }
+  return merged;
+}
+
+function isSameMembers(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+    return false;
+  }
+  return a.every((item, idx) => {
+    const other = b[idx];
+    if (!other) {
+      return false;
+    }
+    return item.id === other.id && item.name === other.name && item.avatar === other.avatar;
+  });
 }
 
 function createEmptyData() {
