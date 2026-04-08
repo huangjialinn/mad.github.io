@@ -733,8 +733,19 @@ button:disabled {
 
 .award-title {
   font-weight: 700;
-  color: #cfe0ff;
+  color: #f6d68b;
   white-space: nowrap;
+  background: linear-gradient(120deg, #f7e3a4 5%, #ffe7bf 40%, #f2c66e 60%, #fff1c6 85%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow:
+    0 0 10px rgba(255, 210, 120, 0.35),
+    0 0 22px rgba(255, 230, 170, 0.22);
+  animation:
+    title-shimmer 8s linear infinite,
+    gold-breathe 3.6s ease-in-out infinite;
 }
 
 .award-winners {
@@ -1176,6 +1187,21 @@ code {
   }
   100% {
     background-position: 200% 50%;
+  }
+}
+
+@keyframes gold-breathe {
+  0% {
+    filter: drop-shadow(0 0 0 rgba(255, 211, 120, 0));
+    opacity: 0.85;
+  }
+  50% {
+    filter: drop-shadow(0 0 14px rgba(255, 211, 120, 0.55));
+    opacity: 1;
+  }
+  100% {
+    filter: drop-shadow(0 0 0 rgba(255, 211, 120, 0));
+    opacity: 0.85;
   }
 }
 

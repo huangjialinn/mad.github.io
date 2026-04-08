@@ -1551,7 +1551,7 @@ function renderSelectedDateEvents() {
     }
     if (item.type === "sport") {
       card.appendChild(makeParagraph(`活动：${item.activity}`));
-      card.appendChild(makeParagraph(`运动时间：${item.sportTime ? item.sportTime.replace("T", " ") : "未填写"}`));
+      card.appendChild(makeParagraph(`运动时间：${item.sportTime || "未填写"}`));
     }
     card.appendChild(makeParagraph(`成员：${toMemberNames(item.memberIds).join("、")}`));
     const images = makeImages(item.images);
