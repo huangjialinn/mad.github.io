@@ -714,6 +714,14 @@ button:disabled {
   margin-bottom: 10px;
 }
 
+.calendar-awards-section {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid rgba(120, 140, 190, 0.22);
+  border-radius: 12px;
+  background: rgba(12, 18, 30, 0.88);
+}
+
 .award-list {
   display: flex;
   flex-direction: column;

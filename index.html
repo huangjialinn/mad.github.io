@@ -106,10 +106,6 @@
               <span class="summary-value" id="summary-sport">0</span>
             </div>
           </div>
-          <div class="calendar-awards">
-            <h3>每月表彰</h3>
-            <div class="award-list" id="monthly-awards"></div>
-          </div>
           <div class="selected-events">
             <h3 id="selected-date-title"></h3>
             <div id="selected-date-events"></div>
@@ -153,12 +149,17 @@
           <label id="event-images-wrap">
             图片
             <input id="event-images" type="file" accept="image/*" multiple>
-            <small id="event-image-hint" class="muted">喝酒搞事最多 1 张；吃饭搞事最多 9 张；运动搞事不需要图片。手机建议单张 8MB 以内。</small>
+            <small id="event-image-hint" class="muted">喝酒搞事最多 1 张；吃饭搞事最多 9 张；运动搞事最多 1 张。手机建议单张 8MB 以内。</small>
           </label>
           <button type="submit">新增搞事</button>
             </form>
           </div>
       </article>
+
+      <section class="card calendar-awards-section">
+        <h2>每月表彰</h2>
+        <div class="award-list" id="monthly-awards"></div>
+      </section>
 
       <article class="card stacked-panel" data-panel="honor" role="tabpanel">
           <h2>全场最佳</h2>
