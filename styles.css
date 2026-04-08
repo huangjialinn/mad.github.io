@@ -1035,6 +1035,17 @@ code {
 }
 
 @media (max-width: 760px) {
+  .page {
+    width: min(100%, 100vw);
+    padding-inline: 0;
+  }
+
+  .page > section.card,
+  .page > section.stacked > article.card {
+    width: min(100%, 94vw);
+    margin-inline: auto;
+  }
+
   .layout,
   .github-grid,
   .login-grid {
