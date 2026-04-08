@@ -676,6 +676,62 @@ button:disabled {
   object-fit: cover;
   border: 1px solid var(--line);
   border-radius: 8px;
+  cursor: zoom-in;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.images img:hover {
+  transform: translateY(-1px) scale(1.02);
+  border-color: var(--line-strong);
+  box-shadow: 0 8px 16px rgba(8, 16, 36, 0.5);
+}
+
+.image-viewer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 7, 15, 0.88);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 180ms ease, visibility 180ms ease;
+  z-index: 40;
+  padding: 24px;
+}
+
+.image-viewer.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.image-viewer img {
+  max-width: min(960px, 92vw);
+  max-height: 86vh;
+  object-fit: contain;
+  border-radius: 16px;
+  border: 1px solid rgba(142, 172, 255, 0.4);
+  box-shadow: 0 24px 60px rgba(5, 8, 20, 0.55);
+  background: rgba(7, 12, 24, 0.9);
+}
+
+.image-viewer-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(120, 140, 255, 0.5);
+  background: rgba(10, 18, 34, 0.9);
+  color: #dbe5ff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.image-viewer-close:hover {
+  filter: brightness(1.08);
 }
 
 .person {

@@ -94,6 +94,9 @@ function cacheDom() {
     "sync-status",
     "login-status",
     "sync-now-btn",
+    "image-viewer",
+    "image-viewer-img",
+    "image-viewer-close",
     "prev-month-btn",
     "next-month-btn",
     "calendar-title",
@@ -217,6 +220,19 @@ function populateMemberControls() {
 function bindEvents() {
   addDomListener("admin-login-form", "submit", handleAdminLogin);
   addDomListener("sync-now-btn", "click", handleSyncNow);
+  addDomListener("image-viewer-close", "click", closeImageViewer);
+  if (dom["image-viewer"]) {
+    dom["image-viewer"].addEventListener("click", (event) => {
+      if (event.target === dom["image-viewer"]) {
+        closeImageViewer();
+      }
+    });
+  }
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeImageViewer();
+    }
+  });
   addDomListener("manage-toggle-btn", "click", handleManageToggle);
   // Mobile fallback: some browsers may miss click when layered effects are present.
   addDomListener("manage-toggle-btn", "touchend", (event) => {
@@ -1214,9 +1230,30 @@ function makeImages(images = []) {
     img.alt = "上传图片";
     img.loading = "lazy";
     img.decoding = "async";
+    img.addEventListener("click", () => openImageViewer(src));
     wrap.appendChild(img);
   });
   return wrap;
+}
+
+function openImageViewer(src) {
+  if (!dom["image-viewer"] || !dom["image-viewer-img"]) {
+    return;
+  }
+  dom["image-viewer-img"].src = src;
+  dom["image-viewer"].classList.add("open");
+  dom["image-viewer"].setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeImageViewer() {
+  if (!dom["image-viewer"] || !dom["image-viewer-img"]) {
+    return;
+  }
+  dom["image-viewer"].classList.remove("open");
+  dom["image-viewer"].setAttribute("aria-hidden", "true");
+  dom["image-viewer-img"].src = "";
+  document.body.style.overflow = "";
 }
 
 async function removeById(collectionName, id, logText) {
